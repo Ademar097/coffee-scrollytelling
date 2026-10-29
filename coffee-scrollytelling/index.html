@@ -1,0 +1,2079 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>精品咖啡烘焙工藝：Aillio RoasTime 專業雙曲線 Scrollytelling 旗艦展演</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- GSAP & Plugins CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          },
+          colors: {
+            roastime: {
+              bg: '#0a0d14',
+              surface: '#111723',
+              card: '#161f30',
+              border: '#1e293b',
+              ibts: '#ff6b4a',       // RoasTime 經典紅珊瑚 IBTS
+              probe: '#fbbf24',      // 探針 BT 琥珀金
+              drum: '#c084fc',       // 滾筒環境溫 ET 薰衣草紫
+              ror: '#00f5d4',        // 速率 RoR 電光青
+              ref: '#64748b',        // 目標參考曲線 灰藍
+              power: '#ef4444',      // 火力 P 玫瑰紅
+              fan: '#38bdf8',        // 風門 F 天空藍
+              drumRPM: '#a855f7'     // 滾筒轉速 D 紫
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* RoasTime 特殊螢光濾鏡 */
+    .glow-ibts {
+      filter: drop-shadow(0 0 8px rgba(255, 107, 74, 0.75)) drop-shadow(0 0 20px rgba(239, 68, 68, 0.3));
+    }
+    .glow-ror {
+      filter: drop-shadow(0 0 8px rgba(0, 245, 212, 0.85)) drop-shadow(0 0 16px rgba(6, 182, 212, 0.35));
+    }
+    .glow-probe {
+      filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.6));
+    }
+    .glow-drum {
+      filter: drop-shadow(0 0 6px rgba(192, 132, 252, 0.6));
+    }
+    .glow-tracer {
+      filter: drop-shadow(0 0 10px #ff6b4a) drop-shadow(0 0 20px #ef4444);
+    }
+
+    /* 檢查點節點微互動 */
+    .node-interactive {
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+    .node-interactive:hover {
+      transform: scale(1.25);
+    }
+
+    /* 咖啡豆 3D 視差舞台 */
+    .bean-stage {
+      perspective: 1000px;
+      transform-style: preserve-3d;
+    }
+    .bean-card-tilt {
+      transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+      will-change: transform;
+    }
+
+    /* 自訂平滑捲動條 */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0d14;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+
+    /* 水蒸氣升騰動畫 */
+    @keyframes steamFloat {
+      0% { transform: translateY(0) scale(0.8); opacity: 0; }
+      50% { opacity: 0.7; }
+      100% { transform: translateY(-45px) scale(1.4); opacity: 0; }
+    }
+    .steam-particle {
+      animation: steamFloat 2.4s infinite ease-out;
+    }
+
+    /* 一爆火花碎屑微粒 */
+    @keyframes sparkBurst {
+      0% { transform: translate(0, 0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+    }
+    .spark-flake {
+      animation: sparkBurst 0.8s ease-out forwards;
+    }
+
+    /* 曲線開關標籤 */
+    .curve-toggle-btn.active {
+      opacity: 1;
+      border-color: currentColor;
+    }
+    .curve-toggle-btn.inactive {
+      opacity: 0.35;
+      text-decoration: line-through;
+    }
+  </style>
+</head>
+<body class="bg-[#0a0d14] text-slate-100 font-sans antialiased selection:bg-rose-500/30 selection:text-rose-200 min-h-screen overflow-x-hidden">
+
+  <!-- ======================================================== -->
+  <!-- 頂部即時進度條與 RoasTime 全域 HUD 導航主控台            -->
+  <!-- ======================================================== -->
+  <header class="fixed top-0 left-0 w-full z-50 bg-[#0a0d14]/90 backdrop-blur-xl border-b border-slate-800/80 transition-all">
+    <!-- 頂端滾動進度條 -->
+    <div id="scrollProgressBar" class="h-1 bg-gradient-to-r from-cyan-400 via-amber-400 via-rose-500 to-emerald-400 w-0 transition-all duration-75"></div>
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      
+      <!-- 品牌與機台狀態 (Aillio RoasTime Console) -->
+      <div class="flex items-center gap-3">
+        <div class="relative flex items-center justify-center w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+          <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          <span class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400"></span>
+        </div>
+        <div class="hidden sm:block">
+          <div class="flex items-center gap-2">
+            <span class="font-bold tracking-wider text-xs uppercase text-slate-200">Aillio RoasTime v4.6</span>
+            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900 text-rose-400 border border-rose-500/30">BULLET R1 V2 // USB CONNECTED</span>
+          </div>
+          <div class="text-[10px] font-mono text-slate-400 truncate max-w-[280px]">RECIPE #084 // ETHIOPIA YIRGACHEFFE G1 (350g)</div>
+        </div>
+      </div>
+
+      <!-- 階段 HUD 快速跳轉群 (RoasTime 3大分期 + 下豆) -->
+      <nav class="hidden md:flex items-center gap-1.5 lg:gap-2 text-xs font-mono">
+        <button onclick="jumpToPhase(0)" id="hud-btn-0" class="hud-btn group px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/50 transition-all flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400/40 group-hover:bg-cyan-400"></span>
+          <span>01 入豆回溫 (TP)</span>
+        </button>
+        <button onclick="jumpToPhase(1)" id="hud-btn-1" class="hud-btn group px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-amber-400 hover:border-amber-500/50 transition-all flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400/40 group-hover:bg-amber-400"></span>
+          <span>02 梅納轉黃 (YEL)</span>
+        </button>
+        <button onclick="jumpToPhase(2)" id="hud-btn-2" class="hud-btn group px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-rose-400 hover:border-rose-500/50 transition-all flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-rose-400/40 group-hover:bg-rose-400"></span>
+          <span>03 一爆裂解 (FC)</span>
+        </button>
+        <button onclick="jumpToPhase(3)" id="hud-btn-3" class="hud-btn group px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/50 transition-all flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400/40 group-hover:bg-emerald-400"></span>
+          <span>04 開閘出鍋 (DROP)</span>
+        </button>
+      </nav>
+
+      <!-- 快捷工具群：日誌抽屜、參考曲線、音效、溫標、自動巡航 -->
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <!-- 參考曲線切換 -->
+        <button id="toggleRefBtn" onclick="toggleReferenceCurve()" class="px-2.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-400 hover:text-slate-200 text-xs font-mono flex items-center gap-1 transition-all" title="切換冠軍參考配方曲線 (R)">
+          <span>👁️</span>
+          <span class="hidden xl:inline text-[10px]">參考曲線</span>
+        </button>
+
+        <!-- 烘焙事件日誌面板開關 -->
+        <button onclick="toggleEventLogDrawer()" id="logToggleBtn" class="px-2.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-400 hover:text-rose-400 text-xs font-mono flex items-center gap-1 transition-all" title="展開烘焙事件即時日誌 (L)">
+          <span>📜</span>
+          <span class="hidden sm:inline text-[10px]">事件日誌</span>
+        </button>
+
+        <!-- 音效切換 -->
+        <button id="soundToggleBtn" onclick="toggleAudio()" class="px-2.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900/80 text-slate-400 hover:text-white hover:border-slate-700 text-xs flex items-center gap-1.5 transition-all" title="切換熱力音效 (M)">
+          <span id="soundIcon">🔇</span>
+          <span class="hidden sm:inline text-[11px] font-mono">音效</span>
+        </button>
+
+        <!-- 溫標切換 -->
+        <button id="tempUnitBtn" onclick="toggleTempUnit()" class="px-2.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900/80 text-rose-400 hover:border-rose-500/50 text-xs font-mono font-bold transition-all" title="切換溫標 °C / °F (C)">
+          °C
+        </button>
+
+        <!-- 自動巡航播放/暫停 -->
+        <button id="autoTourBtn" onclick="toggleAutoTour()" class="px-3 py-1.5 rounded-lg border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-medium flex items-center gap-1.5 shadow-sm transition-all" title="自動演繹漫遊 (Space)">
+          <svg id="tourPlayIcon" class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span id="tourBtnText" class="font-mono text-[11px]">巡航</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ======================================================== -->
+  <!-- 1. Hero 引言區塊：Aillio RoasTime 工藝風格               -->
+  <!-- ======================================================== -->
+  <section class="min-h-screen pt-20 flex flex-col justify-center items-center text-center px-4 sm:px-6 relative overflow-hidden">
+    <!-- 背景氛圍光效 -->
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,107,74,0.12)_0%,rgba(0,245,212,0.04)_45%,transparent_75%)] pointer-events-none"></div>
+    <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-rose-500/10 blur-[130px] rounded-full pointer-events-none"></div>
+
+    <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-rose-500/30 bg-rose-500/10 text-rose-400 text-xs font-mono mb-6 backdrop-blur-md">
+      <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span>
+      <span>AILLIO ROASTIME SENSORY SCROLLYTELLING ENGINE</span>
+    </div>
+
+    <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight max-w-4xl leading-[1.15]">
+      真實還原 RoasTime<br>
+      <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-amber-400 to-cyan-400">IBTS 物理相變雙曲線</span>
+    </h1>
+
+    <p class="mt-6 text-slate-400 text-base md:text-lg max-w-2xl leading-relaxed">
+      告別生硬的假曲線。精準還原生豆入鍋後的 <span class="text-rose-400 font-semibold">200°C 下衝回溫點 (TP)</span>、紅外線 <span class="text-rose-400 font-semibold">IBTS 豆溫</span>、<span class="text-amber-400 font-semibold">傳統探針 (Probe)</span>、<span class="text-purple-400 font-semibold">滾筒環境溫 (ET)</span> 與 <span class="text-cyan-400 font-semibold">RoR 升溫速率</span>，同步串聯 Aillio P/F/D 火力風門調控階梯！
+    </p>
+
+    <!-- 烘焙批次環境參數 HUD 標籤群 -->
+    <div class="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl w-full text-left font-mono text-xs">
+      <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">
+        <div class="text-slate-500 text-[10px]">ROASTER HARDWARE</div>
+        <div class="font-bold text-slate-200 mt-0.5">Aillio Bullet R1 V2</div>
+        <div class="text-[10px] text-rose-400 mt-1">紅外線 IBTS + 實體雙探針</div>
+      </div>
+      <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">
+        <div class="text-slate-500 text-[10px]">ORIGIN / PROCESS</div>
+        <div class="font-bold text-slate-200 mt-0.5">耶加雪菲 沃卡 G1</div>
+        <div class="text-[10px] text-cyan-400 mt-1">2,150 MASL 水洗 350g</div>
+      </div>
+      <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">
+        <div class="text-slate-500 text-[10px]">CHARGE TEMP (入豆溫)</div>
+        <div class="font-bold text-rose-400 mt-0.5">200.0°C (IBTS)</div>
+        <div class="text-[10px] text-slate-400 mt-1">預熱滾筒轉速 D9</div>
+      </div>
+      <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm">
+        <div class="text-slate-500 text-[10px]">TARGET PROFILE</div>
+        <div class="font-bold text-amber-300 mt-0.5">淺焙 City (Agtron 82.5)</div>
+        <div class="text-[10px] text-emerald-400 mt-1">DTR 目標: 15.5% ~ 16.5%</div>
+      </div>
+    </div>
+
+    <!-- 向下滾動引導 -->
+    <div class="mt-14 flex flex-col items-center gap-2.5 text-slate-500 text-xs font-mono">
+      <span>向下滾動觀察入豆下衝與升溫進程</span>
+      <div class="w-5 h-9 rounded-full border-2 border-slate-700 flex justify-center p-1">
+        <div class="w-1.5 h-2 bg-rose-400 rounded-full animate-bounce"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- 2. Pinned 核心展演視窗：RoasTime 雙曲線 + 咖啡豆相變舞台 -->
+  <!-- ======================================================== -->
+  <section id="pinSection" class="relative w-full h-screen overflow-hidden bg-[#0a0d14] border-y border-slate-800/90">
+    <div id="pinContent" class="w-full h-full relative flex flex-col justify-between max-w-7xl mx-auto px-4 sm:px-6 py-4 md:py-6">
+
+      <!-- ================= 2.1 頂部即時數據儀表板 (RoasTime Telemetry HUD) ================= -->
+      <div class="w-full grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 z-30 pt-10 sm:pt-4">
+        
+        <!-- 時間 -->
+        <div class="bg-[#111723]/90 border border-slate-800/90 rounded-xl px-3.5 py-2 backdrop-blur-md">
+          <div class="text-[10px] font-mono uppercase tracking-wider text-slate-400">TIME</div>
+          <div id="telemetryTime" class="text-lg sm:text-xl font-mono font-bold text-white mt-0.5">00:00</div>
+          <div class="text-[9px] font-mono text-slate-500 mt-0.5">Total: 10:15</div>
+        </div>
+
+        <!-- IBTS 豆溫 (RoasTime 標誌性紅外線讀數) -->
+        <div class="bg-[#111723]/90 border border-rose-500/40 rounded-xl px-3.5 py-2 backdrop-blur-md relative overflow-hidden group">
+          <div class="text-[10px] font-mono uppercase tracking-wider text-rose-400 flex items-center justify-between font-bold">
+            <span>BEAN (IBTS)</span>
+            <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+          </div>
+          <div id="telemetryIBTS" class="text-lg sm:text-xl font-mono font-bold text-rose-300 mt-0.5">200.0°C</div>
+          <div id="telemetryPhaseSub" class="text-[9px] font-mono text-slate-400 mt-0.5 truncate">Charge In (入豆下衝)</div>
+        </div>
+
+        <!-- 實體探針 BT (傳統熱電偶) -->
+        <div class="bg-[#111723]/90 border border-slate-800/90 rounded-xl px-3.5 py-2 backdrop-blur-md">
+          <div class="text-[10px] font-mono uppercase tracking-wider text-amber-400 flex items-center justify-between">
+            <span>BEAN (PROBE)</span>
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          </div>
+          <div id="telemetryProbe" class="text-lg sm:text-xl font-mono font-bold text-amber-300 mt-0.5">195.0°C</div>
+          <div class="text-[9px] font-mono text-slate-500 mt-0.5">探針熱滯後補正</div>
+        </div>
+
+        <!-- 升溫速率 RoR (IBTS RoR) -->
+        <div class="bg-[#111723]/90 border border-cyan-500/30 rounded-xl px-3.5 py-2 backdrop-blur-md">
+          <div class="text-[10px] font-mono uppercase tracking-wider text-cyan-400 flex items-center justify-between font-bold">
+            <span>IBTS RoR</span>
+            <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+          </div>
+          <div id="telemetryRoR" class="text-lg sm:text-xl font-mono font-bold text-cyan-300 mt-0.5">0.0°/m</div>
+          <div id="telemetryRoRSub" class="text-[9px] font-mono text-slate-500 mt-0.5">回溫衝頂再滑降</div>
+        </div>
+
+        <!-- 發展時間比 DTR -->
+        <div class="bg-[#111723]/90 border border-slate-800/90 rounded-xl px-3.5 py-2 backdrop-blur-md">
+          <div class="text-[10px] font-mono uppercase tracking-wider text-rose-400">DTR %</div>
+          <div id="telemetryDTR" class="text-lg sm:text-xl font-mono font-bold text-rose-300 mt-0.5">0.0%</div>
+          <div id="dtrSubText" class="text-[9px] font-mono text-slate-500 mt-0.5">起爆前 (Pre-FC)</div>
+        </div>
+
+        <!-- Aillio Bullet 機台檔位即時反饋 (P/F/D) -->
+        <div class="bg-[#111723]/90 border border-slate-800/90 rounded-xl px-3.5 py-2 backdrop-blur-md font-mono">
+          <div class="text-[10px] uppercase tracking-wider text-slate-400">BULLET SETTINGS</div>
+          <div class="flex items-center justify-between mt-1 text-xs">
+            <span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold" id="badgePower">P8</span>
+            <span class="px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30 font-bold" id="badgeFan">F2</span>
+            <span class="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30 font-bold" id="badgeDrum">D9</span>
+          </div>
+          <div class="text-[9px] text-slate-500 mt-1 truncate">功率/風速/轉速</div>
+        </div>
+
+      </div>
+
+      <!-- ================= 2.2 中央雙主軸：左側 RoasTime 圖表 + 右側 咖啡豆相變舞台 ================= -->
+      <div class="w-full flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 items-center my-auto min-h-0 relative z-20">
+        
+        <!-- 左側：RoasTime 旗艦多軌曲線畫布 (7 Columns) -->
+        <div class="lg:col-span-7 h-full flex flex-col justify-center relative bg-[#111723]/80 rounded-2xl border border-slate-800/90 p-3 sm:p-4 backdrop-blur-md shadow-2xl">
+          
+          <!-- 圖表標題、多軌開關圖例 (可點擊開啟/隱藏各曲線) -->
+          <div class="flex flex-wrap items-center justify-between text-xs font-mono mb-2 px-1 gap-2">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+              <!-- IBTS 開關 -->
+              <button onclick="toggleCurve('ibts')" id="btn-toggle-ibts" class="curve-toggle-btn active flex items-center gap-1.5 text-rose-400 font-bold px-1.5 py-0.5 rounded border border-rose-500/30 bg-rose-950/30">
+                <span class="w-2.5 h-1 rounded-full bg-rose-500"></span>
+                <span>IBTS</span>
+              </button>
+              <!-- Probe 開關 -->
+              <button onclick="toggleCurve('probe')" id="btn-toggle-probe" class="curve-toggle-btn active flex items-center gap-1.5 text-amber-400 font-semibold px-1.5 py-0.5 rounded border border-amber-500/30 bg-amber-950/30">
+                <span class="w-2.5 h-0.5 rounded-full bg-amber-400"></span>
+                <span>Probe</span>
+              </button>
+              <!-- Drum ET 開關 -->
+              <button onclick="toggleCurve('drum')" id="btn-toggle-drum" class="curve-toggle-btn active flex items-center gap-1.5 text-purple-400 font-semibold px-1.5 py-0.5 rounded border border-purple-500/30 bg-purple-950/30">
+                <span class="w-2.5 h-0.5 rounded-full bg-purple-400"></span>
+                <span>Drum(ET)</span>
+              </button>
+              <!-- RoR 開關 -->
+              <button onclick="toggleCurve('ror')" id="btn-toggle-ror" class="curve-toggle-btn active flex items-center gap-1.5 text-cyan-400 font-bold px-1.5 py-0.5 rounded border border-cyan-500/30 bg-cyan-950/30">
+                <span class="w-2.5 h-1 rounded-full bg-cyan-400 border-t border-dashed"></span>
+                <span>RoR</span>
+              </button>
+              <!-- 參考曲線開關 -->
+              <button onclick="toggleReferenceCurve()" id="btn-toggle-ref" class="curve-toggle-btn active flex items-center gap-1.5 text-slate-400 font-medium px-1.5 py-0.5 rounded border border-slate-700 bg-slate-900/50">
+                <span class="w-2.5 h-0.5 rounded-full bg-slate-400 border-t border-dotted"></span>
+                <span>REF 參考</span>
+              </button>
+            </div>
+            
+            <div id="chartHoverInspector" class="text-[11px] font-mono text-slate-400 hidden sm:block">
+              <span class="text-slate-500">游標懸停:</span> <span id="hoverInfoText">滑動以檢視時間點</span>
+            </div>
+          </div>
+
+          <!-- SVG 畫布本體 (RoasTime 物理曲線與背景分期) -->
+          <div class="relative w-full aspect-[16/9] max-h-[360px] select-none" id="chartContainerDiv">
+            <svg id="roastChartSvg" class="w-full h-full overflow-visible" viewBox="0 0 1000 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <!-- IBTS 漸層 (紅珊瑚 -> 火焰金 -> 玫瑰紅 -> 翠綠出鍋) -->
+                <linearGradient id="ibtsGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#ff6b4a" />
+                  <stop offset="20%" stop-color="#06b6d4" />
+                  <stop offset="48%" stop-color="#f59e0b" />
+                  <stop offset="83%" stop-color="#f43f5e" />
+                  <stop offset="100%" stop-color="#10b981" />
+                </linearGradient>
+
+                <!-- RoR 漸層 -->
+                <linearGradient id="rorGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#06b6d4" />
+                  <stop offset="25%" stop-color="#00f5d4" />
+                  <stop offset="60%" stop-color="#06b6d4" />
+                  <stop offset="100%" stop-color="#0284c7" />
+                </linearGradient>
+
+                <!-- 座標網格樣式 -->
+                <pattern id="chartGrid" width="80" height="40" patternUnits="userSpaceOnUse">
+                  <path d="M 80 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.75" stroke-opacity="0.45" />
+                </pattern>
+
+                <!-- 掃描光柱漸層 -->
+                <linearGradient id="scanBeamGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#00f5d4" stop-opacity="0" />
+                  <stop offset="50%" stop-color="#ff6b4a" stop-opacity="0.8" />
+                  <stop offset="100%" stop-color="#10b981" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+
+              <!-- ================= 1. RoasTime 標誌性背景分期色塊 (Phase Shading) ================= -->
+              <!-- 脫水期 (Drying Phase 0:00 - 4:50) -->
+              <rect x="80" y="50" width="393" height="340" fill="#06b6d4" fill-opacity="0.05" />
+              <!-- 梅納反應期 (Maillard Phase 4:50 - 8:35) -->
+              <rect x="473" y="50" width="305" height="340" fill="#f59e0b" fill-opacity="0.05" />
+              <!-- 發展期 (Development Phase 8:35 - 10:15) -->
+              <rect x="778" y="50" width="135" height="340" fill="#f43f5e" fill-opacity="0.08" />
+
+              <!-- 分期頂部文字標籤 (RoasTime Header Badges) -->
+              <g font-size="10" font-family="'JetBrains Mono', monospace" font-weight="700">
+                <text x="276" y="68" fill="#06b6d4" text-anchor="middle" opacity="0.85">DRYING PHASE // 47.1%</text>
+                <text x="625" y="68" fill="#f59e0b" text-anchor="middle" opacity="0.85">MAILLARD // 36.6%</text>
+                <text x="845" y="68" fill="#f43f5e" text-anchor="middle" opacity="0.95">DEV // 16.3%</text>
+              </g>
+
+              <!-- 背景座標格網 -->
+              <rect x="80" y="50" width="833" height="340" fill="url(#chartGrid)" />
+
+              <!-- Y 軸左側標籤 (BT / IBTS °C) -->
+              <g font-size="10" font-family="'JetBrains Mono', monospace" fill="#64748b" text-anchor="end">
+                <text x="72" y="65" id="y-label-240">240°C</text>
+                <text x="72" y="125" id="y-label-210">210°C</text>
+                <text x="72" y="185" id="y-label-180">180°C</text>
+                <text x="72" y="245" id="y-label-150">150°C</text>
+                <text x="72" y="305" id="y-label-120">120°C</text>
+                <text x="72" y="365" id="y-label-90">90°C</text>
+              </g>
+
+              <!-- Y 軸右側標籤 (RoR °C/min) -->
+              <g font-size="10" font-family="'JetBrains Mono', monospace" fill="#00f5d4" text-anchor="start" opacity="0.9">
+                <text x="920" y="85">30°</text>
+                <text x="920" y="145">24°</text>
+                <text x="920" y="205">18°</text>
+                <text x="920" y="265">12°</text>
+                <text x="920" y="325">6°</text>
+                <text x="920" y="385">0°</text>
+              </g>
+
+              <!-- X 軸時間標籤 (Minutes) -->
+              <g font-size="10" font-family="'JetBrains Mono', monospace" fill="#64748b" text-anchor="middle">
+                <text x="80" y="405">00:00</text>
+                <text x="182" y="405">01:15</text>
+                <text x="473" y="405">04:50</text>
+                <text x="778" y="405">08:35</text>
+                <text x="913" y="405">10:15</text>
+              </g>
+
+              <!-- ================= 2. 目標烘焙冠軍參考曲線 (Reference Profile Overlay) ================= -->
+              <g id="refProfileGroup" opacity="0.6">
+                <!-- 參考 IBTS 曲線 -->
+                <path
+                  d="M 80,147 C 105,272 145,362 182,362 C 240,362 350,292 473,227 C 580,167 680,160 778,154 C 830,140 875,132 913,130"
+                  stroke="#64748b"
+                  stroke-width="1.8"
+                  stroke-dasharray="4 4"
+                />
+                <!-- 參考 RoR 曲線 -->
+                <path
+                  d="M 80,385 C 115,385 155,363 182,348 C 215,308 238,178 255,168 C 285,168 370,208 473,253 C 570,293 680,308 778,318 C 830,326 875,336 913,341"
+                  stroke="#475569"
+                  stroke-width="1.2"
+                  stroke-dasharray="3 3"
+                />
+              </g>
+
+              <!-- ================= 3. 底軌參考線 (Base Ghost Curves) ================= -->
+              <!-- 滾筒環境溫底軌 (Lavender Drum ET) -->
+              <path
+                id="baseCurveDrum"
+                d="M 80,115 C 110,155 150,185 182,185 C 260,185 360,150 473,120 C 580,90 680,80 778,73 C 830,70 875,69 913,69"
+                stroke="#334155"
+                stroke-width="1.5"
+                stroke-dasharray="4 4"
+              />
+
+              <!-- 實體探針底軌 (Yellow Probe) -->
+              <path
+                id="baseCurveProbe"
+                d="M 80,155 C 115,250 160,349 200,349 C 260,349 360,295 473,235 C 580,175 680,165 778,158 C 830,145 875,136 913,132"
+                stroke="#334155"
+                stroke-width="1.8"
+                stroke-dasharray="4 4"
+              />
+
+              <!-- RoR 速率底軌 (Cyan RoR) -->
+              <path
+                id="baseCurveRoR"
+                d="M 80,385 C 115,385 155,365 182,350 C 215,310 238,180 255,170 C 285,170 370,210 473,255 C 570,295 680,310 778,320 C 830,328 875,338 913,343"
+                stroke="#1e293b"
+                stroke-width="2.5"
+                stroke-dasharray="4 4"
+              />
+
+              <!-- IBTS 豆溫底軌 (Coral IBTS) -->
+              <path
+                id="baseCurveIBTS"
+                d="M 80,145 C 105,270 145,360 182,360 C 240,360 350,290 473,225 C 580,165 680,158 778,152 C 830,138 875,130 913,128"
+                stroke="#1e293b"
+                stroke-width="3"
+                stroke-dasharray="6 6"
+              />
+
+              <!-- ================= 4. 動態描摹曲線 (Active Curves) ================= -->
+              <!-- 滾筒環境溫 Drum ET (Lavender Purple) -->
+              <path
+                id="activeCurveDrum"
+                d="M 80,115 C 110,155 150,185 182,185 C 260,185 360,150 473,120 C 580,90 680,80 778,73 C 830,70 875,69 913,69"
+                stroke="#c084fc"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-dasharray="6 4"
+                opacity="0.85"
+                class="glow-drum"
+              />
+
+              <!-- 實體探針 Probe BT (Amber 固體熱滯後) -->
+              <path
+                id="activeCurveProbe"
+                d="M 80,155 C 115,250 160,349 200,349 C 260,349 360,295 473,235 C 580,175 680,165 778,158 C 830,145 875,136 913,132"
+                stroke="#fbbf24"
+                stroke-width="2"
+                stroke-linecap="round"
+                opacity="0.85"
+                class="glow-probe"
+              />
+
+              <!-- RoR 速率曲線 (Electric Cyan RoasTime RoR) -->
+              <path
+                id="activeCurveRoR"
+                d="M 80,385 C 115,385 155,365 182,350 C 215,310 238,180 255,170 C 285,170 370,210 473,255 C 570,295 680,310 778,320 C 830,328 875,338 913,343"
+                stroke="url(#rorGradient)"
+                stroke-width="3.5"
+                stroke-linecap="round"
+                class="glow-ror"
+              />
+
+              <!-- 紅外線 IBTS 豆溫主曲線 (Coral Red S-Curve with Drop-in Plunge) -->
+              <path
+                id="activeCurveIBTS"
+                d="M 80,145 C 105,270 145,360 182,360 C 240,360 350,290 473,225 C 580,165 680,158 778,152 C 830,138 875,130 913,128"
+                stroke="url(#ibtsGradient)"
+                stroke-width="5"
+                stroke-linecap="round"
+                class="glow-ibts"
+              />
+
+              <!-- ================= 5. Aillio Bullet 機台硬體控制階梯 (P/F/D Control Track) ================= -->
+              <!-- 底部軌道區 (Y: 420 ~ 455) -->
+              <g id="bulletControlTrack">
+                <!-- 軌道底槽 -->
+                <rect x="80" y="420" width="833" height="42" fill="#0f172a" fill-opacity="0.6" rx="6" stroke="#1e293b" stroke-width="0.8" />
+                
+                <!-- 標籤 -->
+                <text x="88" y="435" font-size="9" font-family="'JetBrains Mono'" fill="#ef4444" font-weight="700">PWR</text>
+                <text x="88" y="454" font-size="9" font-family="'JetBrains Mono'" fill="#38bdf8" font-weight="700">FAN</text>
+
+                <!-- 火力 Power 階梯 (P8 -> P7 -> P6 -> P5) -->
+                <line x1="120" y1="432" x2="473" y2="432" stroke="#ef4444" stroke-width="2.5" />
+                <line x1="473" y1="432" x2="473" y2="435" stroke="#ef4444" stroke-width="2.5" />
+                <line x1="473" y1="435" x2="680" y2="435" stroke="#ef4444" stroke-width="2.5" />
+                <line x1="680" y1="435" x2="680" y2="438" stroke="#ef4444" stroke-width="2.5" />
+                <line x1="680" y1="438" x2="778" y2="438" stroke="#ef4444" stroke-width="2.5" />
+                <line x1="778" y1="438" x2="778" y2="440" stroke="#ef4444" stroke-width="2.5" />
+                <line x1="778" y1="440" x2="913" y2="440" stroke="#ef4444" stroke-width="2.5" />
+
+                <!-- 火力標籤標記 -->
+                <text x="280" y="429" font-size="9" font-family="'JetBrains Mono'" fill="#ef4444">P8</text>
+                <text x="560" y="432" font-size="9" font-family="'JetBrains Mono'" fill="#ef4444">P7</text>
+                <text x="725" y="435" font-size="9" font-family="'JetBrains Mono'" fill="#ef4444">P6</text>
+                <text x="840" y="437" font-size="9" font-family="'JetBrains Mono'" fill="#ef4444">P5</text>
+
+                <!-- 風門 Fan 階梯 (F2 -> F3 -> F4 -> F5) -->
+                <line x1="120" y1="456" x2="400" y2="456" stroke="#38bdf8" stroke-width="2" />
+                <line x1="400" y1="456" x2="400" y2="453" stroke="#38bdf8" stroke-width="2" />
+                <line x1="400" y1="453" x2="680" y2="453" stroke="#38bdf8" stroke-width="2" />
+                <line x1="680" y1="453" x2="680" y2="450" stroke="#38bdf8" stroke-width="2" />
+                <line x1="680" y1="450" x2="778" y2="450" stroke="#38bdf8" stroke-width="2" />
+                <line x1="778" y1="450" x2="778" y2="447" stroke="#38bdf8" stroke-width="2" />
+                <line x1="778" y1="447" x2="913" y2="447" stroke="#38bdf8" stroke-width="2" />
+
+                <!-- 風門標籤標記 -->
+                <text x="250" y="455" font-size="9" font-family="'JetBrains Mono'" fill="#38bdf8">F2</text>
+                <text x="540" y="452" font-size="9" font-family="'JetBrains Mono'" fill="#38bdf8">F3</text>
+                <text x="725" y="449" font-size="9" font-family="'JetBrains Mono'" fill="#38bdf8">F4</text>
+                <text x="840" y="446" font-size="9" font-family="'JetBrains Mono'" fill="#38bdf8">F5</text>
+              </g>
+
+              <!-- ================= 6. 雷射掃描探針 (Laser Tracer Beam & Scanner) ================= -->
+              <g id="tracerScannerGroup" opacity="0.95">
+                <line id="tracerLineV" x1="80" y1="50" x2="80" y2="460" stroke="url(#scanBeamGradient)" stroke-width="1.5" stroke-dasharray="3 3" />
+                
+                <!-- RoR 探針 -->
+                <circle id="tracerBeadRoR" cx="80" cy="385" r="4" fill="#00f5d4" stroke="#042f2e" stroke-width="2" />
+                <!-- Probe 探針 -->
+                <circle id="tracerBeadProbe" cx="80" cy="155" r="3.5" fill="#fbbf24" stroke="#451a03" stroke-width="1.5" />
+                <!-- Drum ET 探針 -->
+                <circle id="tracerBeadDrum" cx="80" cy="115" r="3.5" fill="#c084fc" stroke="#3b0764" stroke-width="1.5" />
+                <!-- IBTS 主探針 -->
+                <circle id="tracerPulseHalo" cx="80" cy="145" r="14" fill="#ff6b4a" fill-opacity="0.3" class="animate-ping" />
+                <circle id="tracerBeadIBTS" cx="80" cy="145" r="7" fill="#ff6b4a" stroke="#ffffff" stroke-width="2.5" class="glow-tracer" />
+              </g>
+
+              <!-- ================= 7. 專業烘焙事件標籤節點 (RoasTime Event Milestones) ================= -->
+              <!-- 節點 0: Charge 入豆 (80, 145) -->
+              <g class="node-interactive text-rose-400" onclick="jumpToPhase(0)">
+                <circle cx="80" cy="145" r="6" fill="#0f172a" stroke="#ff6b4a" stroke-width="2.5" />
+                <text x="80" y="130" text-anchor="middle" fill="#ff6b4a" font-size="9" font-weight="700">CHARGE 200°C</text>
+              </g>
+
+              <!-- 節點 1: 回溫點 TP (182, 360) -->
+              <g id="node-0" class="node-interactive text-cyan-400" onclick="jumpToPhase(0)">
+                <circle id="pulseRing-0" cx="182" cy="360" r="15" fill="none" stroke="#00f5d4" stroke-width="2" opacity="0.6" />
+                <circle cx="182" cy="360" r="13" fill="#0a0d14" stroke="#00f5d4" stroke-width="2.5" />
+                <circle id="innerDot-0" cx="182" cy="360" r="5" fill="#00f5d4" />
+                <text x="182" y="388" text-anchor="middle" fill="#00f5d4" font-size="10" font-weight="700">TP 01:15 92.5°C</text>
+              </g>
+
+              <!-- 節點 2: 轉黃點 (473, 225) -->
+              <g id="node-1" class="node-interactive text-amber-400" onclick="jumpToPhase(1)">
+                <circle id="pulseRing-1" cx="473" cy="225" r="15" fill="none" stroke="#f59e0b" stroke-width="2" opacity="0" />
+                <circle cx="473" cy="225" r="13" fill="#0a0d14" stroke="#f59e0b" stroke-width="2.5" />
+                <circle id="innerDot-1" cx="473" cy="225" r="5" fill="#f59e0b" />
+                <text x="473" y="205" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="700">YELLOW 04:50 160°C</text>
+              </g>
+
+              <!-- 節點 3: 一爆初起 (778, 152) -->
+              <g id="node-2" class="node-interactive text-rose-400" onclick="jumpToPhase(2)">
+                <circle id="pulseRing-2" cx="778" cy="152" r="15" fill="none" stroke="#f43f5e" stroke-width="2" opacity="0" />
+                <circle cx="778" cy="152" r="13" fill="#0a0d14" stroke="#f43f5e" stroke-width="2.5" />
+                <circle id="innerDot-2" cx="778" cy="152" r="5" fill="#f43f5e" />
+                <text x="778" y="134" text-anchor="middle" fill="#f43f5e" font-size="10" font-weight="700">FC 08:35 196.5°C</text>
+              </g>
+
+              <!-- 節點 4: 出鍋下豆 (913, 128) -->
+              <g id="node-3" class="node-interactive text-emerald-400" onclick="jumpToPhase(3)">
+                <circle id="pulseRing-3" cx="913" cy="128" r="15" fill="none" stroke="#10b981" stroke-width="2" opacity="0" />
+                <circle cx="913" cy="128" r="13" fill="#0a0d14" stroke="#10b981" stroke-width="2.5" />
+                <circle id="innerDot-3" cx="913" cy="128" r="5" fill="#10b981" />
+                <text x="913" y="108" text-anchor="middle" fill="#10b981" font-size="10" font-weight="700">DROP 10:15 208.5°C</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <!-- 右側：咖啡豆感官相變觀察室 + 玻璃擬態解析卡片 (5 Columns) -->
+        <div class="lg:col-span-5 h-full flex flex-col justify-between gap-4">
+          
+          <!-- 咖啡豆 3D 擬真相變觀測台 (Dynamic Coffee Bean Stage) -->
+          <div id="beanStageCard" class="bean-stage relative bg-[#111723]/90 border border-slate-800/90 rounded-2xl p-4 flex flex-col items-center justify-center overflow-hidden min-h-[220px] backdrop-blur-md">
+            
+            <!-- 觀測台上方標題 -->
+            <div class="absolute top-3 left-4 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-rose-400 animate-pulse"></span>
+              <span class="text-[10px] font-mono tracking-widest uppercase text-slate-400">Bean Morphology Chamber</span>
+            </div>
+
+            <!-- 右上角豆體膨脹比例 HUD -->
+            <div class="absolute top-3 right-4 font-mono text-[11px] text-slate-400">
+              Volume: <span id="beanVolumeText" class="text-rose-400 font-bold">100%</span>
+            </div>
+
+            <!-- 水蒸氣粒子容器 (Phase 1 脫水期) -->
+            <div id="steamContainer" class="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <svg class="w-32 h-32 overflow-visible" viewBox="0 0 100 100">
+                <path class="steam-particle" d="M45,70 Q40,50 48,30 T45,10" stroke="#38bdf8" stroke-width="2" fill="none" stroke-linecap="round" style="animation-delay: 0s;" />
+                <path class="steam-particle" d="M55,75 Q60,55 52,35 T57,12" stroke="#38bdf8" stroke-width="2.5" fill="none" stroke-linecap="round" style="animation-delay: 0.7s;" />
+                <path class="steam-particle" d="M50,80 Q45,60 55,40 T48,15" stroke="#38bdf8" stroke-width="1.8" fill="none" stroke-linecap="round" style="animation-delay: 1.4s;" />
+              </svg>
+            </div>
+
+            <!-- 一爆火花破裂碎屑容器 (Phase 3 一爆期) -->
+            <div id="chaffContainer" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+
+            <!-- 負壓急速冷卻旋風環 (Phase 4 冷卻期) -->
+            <div id="coolingFanRing" class="absolute inset-0 pointer-events-none flex items-center justify-center opacity-0 transition-opacity duration-500">
+              <div class="w-48 h-48 rounded-full border-2 border-dashed border-emerald-400/50 animate-spin" style="animation-duration: 3s;"></div>
+              <div class="absolute text-[10px] font-mono text-emerald-300 bg-slate-950/80 px-2 py-0.5 rounded border border-emerald-500/40">
+                CYCLONE COOLING &lt; 120s
+              </div>
+            </div>
+
+            <!-- 咖啡豆向量形體 (動態顏色與裂紋展開) -->
+            <div id="beanWrapper" class="bean-card-tilt relative z-10 my-2">
+              <svg id="coffeeBeanSvg" class="w-32 h-32 md:w-36 md:h-36 drop-shadow-2xl transition-transform duration-300" viewBox="0 0 200 200" fill="none">
+                <defs>
+                  <!-- 咖啡豆動態體表漸層 -->
+                  <radialGradient id="beanColorGrad" cx="35%" cy="30%" r="70%">
+                    <stop id="beanStop0" offset="0%" stop-color="#84cc16" />
+                    <stop id="beanStop1" offset="60%" stop-color="#65a30d" />
+                    <stop id="beanStop2" offset="100%" stop-color="#365314" />
+                  </radialGradient>
+                  
+                  <!-- 咖啡豆表面高光 -->
+                  <linearGradient id="beanSheen" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35" />
+                    <stop offset="40%" stop-color="#ffffff" stop-opacity="0" />
+                  </linearGradient>
+                </defs>
+
+                <!-- 豆體外型 (平滑自然有機輪廓) -->
+                <path
+                  id="beanBodyPath"
+                  d="M 100,22 C 145,22 178,55 178,100 C 178,145 145,178 100,178 C 55,178 22,145 22,100 C 22,55 55,22 100,22 Z"
+                  fill="url(#beanColorGrad)"
+                  stroke="#1c1917"
+                  stroke-width="3"
+                />
+
+                <!-- 豆表柔和高光 -->
+                <path
+                  d="M 100,25 C 140,25 172,55 172,98 C 172,110 160,70 120,50 C 90,35 60,35 100,25 Z"
+                  fill="url(#beanSheen)"
+                />
+
+                <!-- 咖啡豆中線裂溝 (Center Cut) - 隨一爆加寬且裂變 -->
+                <path
+                  id="beanCrease"
+                  d="M 100,25 Q 115,65 88,100 Q 115,135 100,175"
+                  fill="none"
+                  stroke="#1e293b"
+                  stroke-width="5"
+                  stroke-linecap="round"
+                />
+
+                <!-- 一爆裂紋分支 (First Crack Fractures) -->
+                <g id="crackFractures" opacity="0" stroke="#f97316" stroke-width="2" stroke-linecap="round">
+                  <path d="M 88,100 L 68,90" />
+                  <path d="M 94,80 L 118,72" />
+                  <path d="M 96,120 L 122,130" />
+                  <path d="M 85,110 L 65,122" />
+                </g>
+              </svg>
+            </div>
+
+            <!-- 觀測台底座狀態標籤 -->
+            <div id="beanStateBadge" class="text-xs font-mono px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-semibold tracking-wide">
+              STATE: 綠生豆 (GREEN RAW)
+            </div>
+
+          </div>
+
+          <!-- 4 階段浮動敘事解析卡片 (AutoAlpha 絲滑互換容器) -->
+          <div class="relative w-full h-[180px] sm:h-[190px]">
+            
+            <!-- 卡片 0: 入豆吸熱與回溫點 -->
+            <div id="card-0" class="phase-card absolute inset-0 bg-[#161f30]/95 border border-cyan-500/40 p-4 sm:p-5 rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between text-xs font-mono text-cyan-400 font-bold">
+                  <span>DRYING PHASE // 00:00 - 04:50</span>
+                  <span class="px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500/50">TP: 01:15 92.5°C</span>
+                </div>
+                <h3 class="text-lg font-bold text-white mt-1.5">入豆下衝、回溫點與均勻脫水 (Drying)</h3>
+                <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                  200°C 預熱滾筒注入冷生豆，IBTS 瞬間下探至 92.5°C 回溫點（Turning Point）。隨後以高火力 P8 + 微風 F2 建立熱慣性，均勻蒸散游離水，RoR 衝上峰值後平順回落。
+                </p>
+              </div>
+              <div class="flex items-center gap-4 text-[11px] font-mono text-slate-400 border-t border-slate-800/80 pt-2">
+                <div>Aillio檔位: <span class="text-rose-400 font-bold">P8 / F2 / D9</span></div>
+                <div>含水率: <span class="text-cyan-400 font-bold">11.2% → 8.2%</span></div>
+                <div>熱力策略: <span class="text-slate-300">儲備對流熱能</span></div>
+              </div>
+            </div>
+
+            <!-- 卡片 1: 梅納反應 -->
+            <div id="card-1" class="phase-card absolute inset-0 bg-[#161f30]/95 border border-amber-500/40 p-4 sm:p-5 rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between text-xs font-mono text-amber-400 font-bold">
+                  <span>MAILLARD PHASE // 04:50 - 08:35</span>
+                  <span class="px-2 py-0.5 rounded bg-amber-950 border border-amber-500/50">轉黃點: 160°C (Yellowing)</span>
+                </div>
+                <h3 class="text-lg font-bold text-white mt-1.5">梅納反應與芳香前驅物縮合 (Maillard)</h3>
+                <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                  青草氣味轉為烤麵包與堅果甜香，豆體金黃微脹。退火至 P7、加強風門 F3，使還原糖與胺基酸持續縮合生成複雜類黑素，精密控制 RoR 以斜率 -2.2°C/min 穩健下滑。
+                </p>
+              </div>
+              <div class="flex items-center gap-4 text-[11px] font-mono text-slate-400 border-t border-slate-800/80 pt-2">
+                <div>Aillio檔位: <span class="text-amber-400 font-bold">P7 / F3 / D9</span></div>
+                <div>RoR 區間: <span class="text-amber-400 font-bold">13.0° → 8.5°/m</span></div>
+                <div>熱力策略: <span class="text-slate-300">階段階梯退火</span></div>
+              </div>
+            </div>
+
+            <!-- 卡片 2: 一爆初起 -->
+            <div id="card-2" class="phase-card absolute inset-0 bg-[#161f30]/95 border border-rose-500/40 p-4 sm:p-5 rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between text-xs font-mono text-rose-400 font-bold">
+                  <span>DEV PHASE // 08:35 - 10:15</span>
+                  <span class="px-2 py-0.5 rounded bg-rose-950 border border-rose-500/50">DTR 發展比: 16.3%</span>
+                </div>
+                <h3 class="text-lg font-bold text-white mt-1.5">一爆裂解與芳香化學放熱 (First Crack)</h3>
+                <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                  豆芯高壓蒸氣撐裂細胞壁發出密集脆響，化學反應由吸熱轉為放熱。退火至 P6/P5、大風門 F4/F5 排煙排銀皮，穩固 RoR 杜絕失速崩塌（Crash）與熱回彈（Flick）。
+                </p>
+              </div>
+              <div class="flex items-center gap-4 text-[11px] font-mono text-slate-400 border-t border-slate-800/80 pt-2">
+                <div>Aillio檔位: <span class="text-rose-400 font-bold">P6→P5 / F4→F5</span></div>
+                <div>發展時長: <span class="text-rose-400 font-bold">01:40 (16.3%)</span></div>
+                <div>風味定位: <span class="text-slate-300">鎖定白桃與茉莉香</span></div>
+              </div>
+            </div>
+
+            <!-- 卡片 3: 下豆急速冷卻 -->
+            <div id="card-3" class="phase-card absolute inset-0 bg-[#161f30]/95 border border-emerald-500/40 p-4 sm:p-5 rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between text-xs font-mono text-emerald-400 font-bold">
+                  <span>DROP & COOL // 10:15</span>
+                  <span class="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/50">下豆溫: 208.5°C</span>
+                </div>
+                <h3 class="text-lg font-bold text-white mt-1.5">果斷開閘出鍋與冷卻盤風冷 (Quenching)</h3>
+                <p class="text-xs text-slate-300 mt-1.5 leading-relaxed">
+                  達到預定淺焙 Agtron 82.5 色度瞬間開閘出鍋！冷卻攪拌盤於 120 秒內將熟豆降至室溫，終止內部殘熱自焙，完整鎖住高揮發性的花香酯類與細緻果酸。
+                </p>
+              </div>
+              <div class="flex items-center gap-4 text-[11px] font-mono text-slate-400 border-t border-slate-800/80 pt-2">
+                <div>總烘焙時長: <span class="text-emerald-400 font-bold">10:15</span></div>
+                <div>冷卻時長: <span class="text-emerald-400 font-bold">&lt; 120s</span></div>
+                <div>杯測評分: <span class="text-slate-200">SCA 87.5 卓越極品</span></div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ================= 2.3 底部快捷控制小列 (鍵盤快捷與提示) ================= -->
+      <div class="w-full flex items-center justify-between text-[11px] font-mono text-slate-500 pt-2 border-t border-slate-900 z-20">
+        <div class="flex items-center gap-3">
+          <span>快捷鍵:</span>
+          <span class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">1-4</span>
+          <span>換階段</span>
+          <span class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">Space</span>
+          <span>自動巡航</span>
+          <span class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">L</span>
+          <span>日誌</span>
+          <span class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">M</span>
+          <span>音效</span>
+        </div>
+        <div id="footerScrollPct" class="text-slate-400">
+          PROG: 0% // ROASTIME SIM
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- 3. RoasTime 即時事件日誌抽屜 (Event Log Slide-over Panel) -->
+  <!-- ======================================================== -->
+  <div id="eventLogDrawer" class="fixed top-16 right-0 z-40 w-80 max-w-[90vw] h-[calc(100vh-4rem)] bg-[#111723]/95 border-l border-slate-800/90 backdrop-blur-2xl p-4 shadow-2xl transition-transform duration-300 translate-x-full overflow-y-auto">
+    <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span>
+        <h4 class="font-bold text-xs font-mono uppercase text-slate-200">ROASTIME EVENT LOG</h4>
+      </div>
+      <button onclick="toggleEventLogDrawer()" class="text-slate-400 hover:text-white text-xs">✕</button>
+    </div>
+
+    <!-- 事件序列清單 -->
+    <div class="mt-4 space-y-3 font-mono text-xs" id="eventLogList">
+      <!-- 事件 0 -->
+      <div id="log-item-0" class="log-item p-2.5 rounded-xl border border-slate-800/80 bg-slate-900/40 transition-all">
+        <div class="flex items-center justify-between text-[11px] text-slate-500">
+          <span class="text-rose-400 font-bold">00:00:00</span>
+          <span>CHARGE 入豆</span>
+        </div>
+        <div class="text-slate-300 text-xs mt-1">入豆溫: 200.0°C | 預熱滾筒 D9</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">Aillio 初始設定: P8 / F2 / D9</div>
+      </div>
+
+      <!-- 事件 1 -->
+      <div id="log-item-1" class="log-item p-2.5 rounded-xl border border-slate-800/80 bg-slate-900/40 transition-all">
+        <div class="flex items-center justify-between text-[11px] text-slate-500">
+          <span class="text-cyan-400 font-bold">00:01:15</span>
+          <span>TURNING POINT (TP)</span>
+        </div>
+        <div class="text-slate-300 text-xs mt-1">回溫最低點: 92.5°C (IBTS)</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">吸熱反應終止，熱傳導平衡確立</div>
+      </div>
+
+      <!-- 事件 2 -->
+      <div id="log-item-2" class="log-item p-2.5 rounded-xl border border-slate-800/80 bg-slate-900/40 transition-all">
+        <div class="flex items-center justify-between text-[11px] text-slate-500">
+          <span class="text-cyan-400 font-bold">00:02:10</span>
+          <span>RoR PEAK 峰值</span>
+        </div>
+        <div class="text-slate-300 text-xs mt-1">最大升溫速率: 21.5°C/min</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">全功率蓄熱，水分子劇烈揮發</div>
+      </div>
+
+      <!-- 事件 3 -->
+      <div id="log-item-3" class="log-item p-2.5 rounded-xl border border-slate-800/80 bg-slate-900/40 transition-all">
+        <div class="flex items-center justify-between text-[11px] text-slate-500">
+          <span class="text-sky-400 font-bold">00:04:00</span>
+          <span>AIRFLOW ADJUST</span>
+        </div>
+        <div class="text-slate-300 text-xs mt-1">風門升級: F2 → F3</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">帶走高濃度水蒸氣，防止悶蒸</div>
+      </div>
+
+      <!-- 事件 4 -->
+      <div id="log-item-4" class="log-item p-2.5 rounded-xl border border-slate-800/80 bg-slate-900/40 transition-all">
+        <div class="flex items-center justify-between text-[11px] text-slate-500">
+          <span class="text-amber-400 font-bold">00:04:50</span>
+          <span>YELLOWING 轉黃點</span>
+        </div>
+        <div class="text-slate-300 text-xs mt-1">豆溫 160.0°C | 退火 P8 → P7</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">脫水結束 (Drying: 47.1%)，梅納開始</div>
+      </div>
+
+      <!-- 事件 5 -->
+      <div id="log-item-5" class="log-item p-2.5 rounded-xl border border-slate-800/80 bg-slate-900/40 transition-all">
+        <div class="flex items-center justify-between text-[11px] text-slate-500">
+          <span class="text-amber-400 font-bold">00:07:00</span>
+          <span>PRE-FC RETREAT</span>
+        </div>
+        <div class="text-slate-300 text-xs mt-1">退火 P7 → P6 | 風門 F3 → F4</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">收斂升溫速率，防一爆失速衝溫</div>
+      </div>
+
+      <!-- 事件 6 -->
+      <div id="log-item-6" class="log-item p-2.5 rounded-xl border border-slate-800/80 bg-slate-900/40 transition-all">
+        <div class="flex items-center justify-between text-[11px] text-slate-500">
+          <span class="text-rose-400 font-bold">00:08:35</span>
+          <span>FIRST CRACK (FC)</span>
+        </div>
+        <div class="text-slate-300 text-xs mt-1">起爆豆溫 196.5°C | P5 / F5</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">進入放熱反應，大風門強力排銀皮</div>
+      </div>
+
+      <!-- 事件 7 -->
+      <div id="log-item-7" class="log-item p-2.5 rounded-xl border border-slate-800/80 bg-slate-900/40 transition-all">
+        <div class="flex items-center justify-between text-[11px] text-slate-500">
+          <span class="text-emerald-400 font-bold">00:10:15</span>
+          <span>DROP 開閘出鍋</span>
+        </div>
+        <div class="text-slate-300 text-xs mt-1">下豆溫 208.5°C | DTR: 16.3%</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">冷卻盤風冷 &lt; 120s，烘焙圓滿完成</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 4. 全方位後段分析：杯測雷達 + 物理失水率 + 熱傳導矩陣  -->
+  <!-- ======================================================== -->
+  <section class="min-h-screen py-24 px-4 sm:px-6 max-w-6xl mx-auto flex flex-col justify-center relative">
+    
+    <div class="text-center max-w-2xl mx-auto mb-14">
+      <div class="text-xs font-mono uppercase tracking-widest text-rose-400 mb-2 font-bold">Post-Roast Analytics & Cupping</div>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-white">RoasTime 物理批次與感官分析</h2>
+      <p class="text-slate-400 text-sm mt-3 leading-relaxed">
+        透過數位化溫控與 Scrollytelling 即時描摹，烘焙師得以及時調配傳導熱、對流熱與輻射熱平衡，實現可重複的卓越杯測品質。
+      </p>
+
+      <!-- 焙度切換按鈕群 -->
+      <div class="mt-6 inline-flex p-1 bg-slate-900/90 border border-slate-800 rounded-xl">
+        <button onclick="setRoastPreset('light')" id="presetBtn-light" class="preset-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-white bg-rose-500/20 border border-rose-500/40 transition-all">
+          淺焙 (Light / City 82.5)
+        </button>
+        <button onclick="setRoastPreset('medium')" id="presetBtn-medium" class="preset-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
+          中焙 (Medium / Full City 65)
+        </button>
+        <button onclick="setRoastPreset('dark')" id="presetBtn-dark" class="preset-btn px-4 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">
+          深焙 (Dark / French 45)
+        </button>
+      </div>
+    </div>
+
+    <!-- 雷達圖與指標兩欄佈局 -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      
+      <!-- 左側：SVG 風味雷達圖 (Spider Chart) -->
+      <div class="lg:col-span-6 bg-[#111723]/90 border border-slate-800 p-6 rounded-3xl flex flex-col items-center justify-center relative shadow-2xl">
+        <div class="text-xs font-mono text-slate-400 mb-2">SCA 87.5 CUPPING PROFILE RADAR</div>
+        
+        <svg class="w-full max-w-[340px] aspect-square overflow-visible" viewBox="0 0 400 400">
+          <defs>
+            <radialGradient id="radarPolyGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#ff6b4a" stop-opacity="0.65" />
+              <stop offset="100%" stop-color="#f43f5e" stop-opacity="0.15" />
+            </radialGradient>
+          </defs>
+
+          <!-- 背景等高網格環 -->
+          <circle cx="200" cy="200" r="140" fill="none" stroke="#334155" stroke-width="1" stroke-dasharray="3 3" />
+          <circle cx="200" cy="200" r="105" fill="none" stroke="#1e293b" stroke-width="1" />
+          <circle cx="200" cy="200" r="70" fill="none" stroke="#1e293b" stroke-width="1" />
+          <circle cx="200" cy="200" r="35" fill="none" stroke="#1e293b" stroke-width="1" />
+
+          <!-- 5 大軸線 -->
+          <line x1="200" y1="200" x2="200" y2="60" stroke="#334155" stroke-width="1.2" />
+          <line x1="200" y1="200" x2="333" y2="157" stroke="#334155" stroke-width="1.2" />
+          <line x1="200" y1="200" x2="282" y2="313" stroke="#334155" stroke-width="1.2" />
+          <line x1="200" y1="200" x2="118" y2="313" stroke="#334155" stroke-width="1.2" />
+          <line x1="200" y1="200" x2="67" y2="157" stroke="#334155" stroke-width="1.2" />
+
+          <!-- 5 軸文字標籤 -->
+          <text x="200" y="45" text-anchor="middle" fill="#ff6b4a" font-size="12" font-family="'JetBrains Mono'" font-weight="700">花果酸質 (Acidity)</text>
+          <text x="350" y="160" text-anchor="start" fill="#ff6b4a" font-size="12" font-family="'JetBrains Mono'" font-weight="700">甜感 (Sweetness)</text>
+          <text x="295" y="335" text-anchor="start" fill="#ff6b4a" font-size="12" font-family="'JetBrains Mono'" font-weight="700">醇厚度 (Body)</text>
+          <text x="105" y="335" text-anchor="end" fill="#ff6b4a" font-size="12" font-family="'JetBrains Mono'" font-weight="700">乾淨度 (Clean)</text>
+          <text x="50" y="160" text-anchor="end" fill="#ff6b4a" font-size="12" font-family="'JetBrains Mono'" font-weight="700">尾韻 (Aftertaste)</text>
+
+          <!-- 動態雷達多邊形 -->
+          <polygon
+            id="radarPolygon"
+            points="200,68 310,165 240,270 135,290 80,168"
+            fill="url(#radarPolyGrad)"
+            stroke="#ff6b4a"
+            stroke-width="3"
+            stroke-linejoin="round"
+          />
+
+          <!-- 5 頂點發光點 -->
+          <circle id="radarDot-0" cx="200" cy="68" r="5" fill="#ff6b4a" stroke="#fff" stroke-width="1.5" />
+          <circle id="radarDot-1" cx="310" cy="165" r="5" fill="#ff6b4a" stroke="#fff" stroke-width="1.5" />
+          <circle id="radarDot-2" cx="240" cy="270" r="5" fill="#ff6b4a" stroke="#fff" stroke-width="1.5" />
+          <circle id="radarDot-3" cx="135" cy="290" r="5" fill="#ff6b4a" stroke="#fff" stroke-width="1.5" />
+          <circle id="radarDot-4" cx="80" cy="168" r="5" fill="#ff6b4a" stroke="#fff" stroke-width="1.5" />
+        </svg>
+
+        <div id="radarFlavorNotes" class="mt-4 text-xs font-mono text-center text-slate-300 bg-slate-950/60 px-4 py-2 rounded-xl border border-slate-800">
+          杯測風味描述：<span class="text-rose-400 font-bold">茉莉花香、白桃、佛手柑、野莓果酸、蜂蜜綠茶尾韻</span>
+        </div>
+      </div>
+
+      <!-- 右側：3 大 RoasTime 指標卡片 -->
+      <div class="lg:col-span-6 space-y-4">
+        
+        <div class="bg-[#111723]/90 border border-slate-800 p-5 rounded-2xl flex items-start gap-4 hover:border-rose-500/40 transition-all">
+          <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 font-mono font-bold text-xl">
+            16.3%
+          </div>
+          <div>
+            <div class="text-sm font-bold text-white">DTR 發展時間比 (Development Time Ratio)</div>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              一爆開始至下豆時間佔總烘焙時長的百分比（01:40 / 10:15 = 16.3%）。在 RoasTime 監控下，淺中焙甜蜜點落在 15.5% - 16.5%，完整催化糖分且杜絕夾生草青味。
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-[#111723]/90 border border-slate-800 p-5 rounded-2xl flex items-start gap-4 hover:border-cyan-500/40 transition-all">
+          <div class="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-mono font-bold text-xl">
+            IBTS
+          </div>
+          <div>
+            <div class="text-sm font-bold text-white">紅外線豆溫量測 (Infrared Bean Temp Sensor)</div>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              突破傳統金屬探針的熱傳導延遲，IBTS 直接量測滾筒內咖啡豆表面紅外線輻射，精確捕捉入豆瞬間下探 92.5°C 回溫點與真實熱裂解起爆時刻。
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-[#111723]/90 border border-slate-800 p-5 rounded-2xl flex items-start gap-4 hover:border-emerald-500/40 transition-all">
+          <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold text-xl">
+            &lt;120s
+          </div>
+          <div>
+            <div class="text-sm font-bold text-white">負壓旋風冷卻效率 (Quenching Velocity)</div>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              出鍋後強力負壓冷卻盤於 2 分鐘內將豆芯降溫至室溫以下，以極速終止熱裂解反應，完整鎖住頂級花香酯類與芳香醛化合物。
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 烘焙物理失水率與 Agtron 色值量測面板 -->
+    <div class="mt-12 bg-[#111723]/70 border border-slate-800/90 rounded-3xl p-6 sm:p-8 backdrop-blur-md">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <div class="text-[11px] font-mono uppercase text-rose-400 tracking-wider font-bold">PHYSICAL LOSS & AGTRON MEASUREMENT</div>
+          <h3 class="text-xl font-bold text-white mt-1">生熟豆物理失重率與色度分析</h3>
+        </div>
+        <button onclick="openExportModal()" class="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 text-xs font-mono font-bold transition-all flex items-center gap-2">
+          <span>📊</span>
+          <span>匯出 RoasTime 報告</span>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 font-mono text-center">
+        <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+          <div class="text-slate-400 text-xs">生豆投入重 (Green)</div>
+          <div class="text-2xl font-bold text-white mt-1">350.0g</div>
+          <div class="text-[10px] text-cyan-400 mt-0.5">含水率: 11.2%</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+          <div class="text-slate-400 text-xs">熟豆出鍋重 (Roasted)</div>
+          <div class="text-2xl font-bold text-emerald-400 mt-1">298.2g</div>
+          <div class="text-[10px] text-emerald-300 mt-0.5">熟豆含水率: 1.8%</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+          <div class="text-slate-400 text-xs">失重率 (Weight Loss)</div>
+          <div class="text-2xl font-bold text-amber-400 mt-1">14.80%</div>
+          <div class="text-[10px] text-amber-300 mt-0.5">淺中焙標準甜蜜區</div>
+        </div>
+        <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800">
+          <div class="text-slate-400 text-xs">Agtron 色值 (Gourmet)</div>
+          <div class="text-2xl font-bold text-rose-400 mt-1">82.5</div>
+          <div class="text-[10px] text-rose-300 mt-0.5">City Roast (淺焙)</div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ======================================================== -->
+  <!-- 5. 匯出 RoasTime 報告彈窗 (Export Modal)                 -->
+  <!-- ======================================================== -->
+  <div id="exportModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-[#111723] border border-slate-700 w-full max-w-xl rounded-3xl p-6 shadow-2xl relative">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+          <h3 class="font-mono font-bold text-sm text-white">ROASTIME BATCH #084 REPORT SUMMARY</h3>
+        </div>
+        <button onclick="closeExportModal()" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+
+      <div class="mt-4 space-y-3 font-mono text-xs">
+        <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
+          <div class="text-slate-500">PROFILE DETAILS</div>
+          <div class="text-slate-200 mt-1">衣索比亞 耶加雪菲 沃卡 G1 // 水洗處理 // 350g</div>
+          <div class="text-slate-400 mt-0.5">Roaster: Aillio Bullet R1 V2 | Sensor: IBTS + Dual RTD</div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-[11px]">
+          <div class="p-2.5 bg-slate-900/60 rounded-xl border border-slate-800">
+            <span class="text-slate-500">Turning Point (TP):</span>
+            <div class="text-cyan-400 font-bold mt-0.5">01:15 @ 92.5°C</div>
+          </div>
+          <div class="p-2.5 bg-slate-900/60 rounded-xl border border-slate-800">
+            <span class="text-slate-500">Yellowing (YEL):</span>
+            <div class="text-amber-400 font-bold mt-0.5">04:50 @ 160.0°C</div>
+          </div>
+          <div class="p-2.5 bg-slate-900/60 rounded-xl border border-slate-800">
+            <span class="text-slate-500">First Crack (FC):</span>
+            <div class="text-rose-400 font-bold mt-0.5">08:35 @ 196.5°C</div>
+          </div>
+          <div class="p-2.5 bg-slate-900/60 rounded-xl border border-slate-800">
+            <span class="text-slate-500">Drop (End):</span>
+            <div class="text-emerald-400 font-bold mt-0.5">10:15 @ 208.5°C</div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-900/40 rounded-xl border border-slate-800 text-[11px] text-slate-300">
+          <div class="flex justify-between"><span>Drying Phase:</span> <span class="text-cyan-400 font-bold">04:50 (47.1%)</span></div>
+          <div class="flex justify-between mt-1"><span>Maillard Phase:</span> <span class="text-amber-400 font-bold">03:45 (36.6%)</span></div>
+          <div class="flex justify-between mt-1"><span>Development (DTR):</span> <span class="text-rose-400 font-bold">01:40 (16.3%)</span></div>
+          <div class="flex justify-between mt-1"><span>Weight Loss Rate:</span> <span class="text-emerald-400 font-bold">14.80% (298.2g)</span></div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-slate-800 text-xs font-mono">
+        <button onclick="closeExportModal()" class="px-4 py-2 rounded-xl text-slate-400 hover:text-white">關閉</button>
+        <button onclick="alert('已複製 RoasTime 烘焙配方 JSON 格式至剪貼簿！'); closeExportModal();" class="px-5 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold transition-all">
+          複製 JSON 配方
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 6. 頁尾技術總覽與致敬                                   -->
+  <!-- ======================================================== -->
+  <footer class="border-t border-slate-900 py-10 px-6 bg-[#0a0d14] text-center text-xs font-mono text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>
+        <span class="text-slate-300 font-bold">Specialty Coffee Roasting Scrollytelling</span> // Inspired by Aillio RoasTime
+      </div>
+      <div>
+        真實還原 200°C 入豆下衝、TP 回溫、IBTS/Probe/Drum 三軌與 P/F/D 機台調控
+      </div>
+    </div>
+  </footer>
+
+  <!-- ======================================================== -->
+  <!-- 核心 JavaScript：RoasTime 物理插值與雙向互動             -->
+  <!-- ======================================================== -->
+  <script>
+    gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+
+    // ==========================================
+    // 1. 溫標與全域狀態管理
+    // ==========================================
+    let currentTempUnit = 'C';
+    let isSoundEnabled = false;
+    let isAutoTouring = false;
+    let autoTourTween = null;
+    let lastPlayedPhase = -1;
+    let lastActiveIdx = -1;
+    let isRefCurveVisible = true;
+
+    // 曲線可見性狀態
+    const curveVisibility = {
+      ibts: true,
+      probe: true,
+      drum: true,
+      ror: true
+    };
+
+    // RoasTime 4 大檢查點進度比例 Pi (對應 X 軸座標與物理關鍵時間)
+    // 總時間 615 秒 (10:15)
+    // 01:15 回溫點 (TP) -> progress: 75/615 = 0.122
+    // 04:50 轉黃點 (YEL) -> progress: 290/615 = 0.471
+    // 08:35 一爆初起 (FC) -> progress: 515/615 = 0.837
+    // 10:15 出鍋下豆 (DROP) -> progress: 1.0
+    const phaseCheckpoints = [
+      { progress: 0.122, name: "01 回溫點 (TP)", timeSec: 75,  ibtsC: 92.5,  probeC: 98.0,  drumC: 180.0, rorC: 3.5,  dtr: 0.0, power: "P8", fan: "F2", color: "#00f5d4" },
+      { progress: 0.471, name: "02 梅納轉黃 (YEL)", timeSec: 290, ibtsC: 160.0, probeC: 155.0, drumC: 215.0, rorC: 13.0, dtr: 0.0, power: "P7", fan: "F3", color: "#f59e0b" },
+      { progress: 0.837, name: "03 一爆裂解 (FC)", timeSec: 515, ibtsC: 196.5, probeC: 193.5, drumC: 232.0, rorC: 6.5,  dtr: 0.0, power: "P6", fan: "F4", color: "#f43f5e" },
+      { progress: 1.0,   name: "04 下豆出鍋 (DROP)", timeSec: 615, ibtsC: 208.5, probeC: 206.5, drumC: 238.0, rorC: 4.2,  dtr: 16.3, power: "P5", fan: "F5", color: "#10b981" }
+    ];
+
+    function toTempDisplay(celsius) {
+      if (currentTempUnit === 'F') {
+        const f = (celsius * 9/5) + 32;
+        return `${f.toFixed(1)}°F`;
+      }
+      return `${celsius.toFixed(1)}°C`;
+    }
+
+    function toggleTempUnit() {
+      currentTempUnit = currentTempUnit === 'C' ? 'F' : 'C';
+      document.getElementById('tempUnitBtn').innerText = `°${currentTempUnit}`;
+      
+      document.querySelectorAll('.unit-label').forEach(el => {
+        el.innerText = `°${currentTempUnit}`;
+      });
+
+      // 更新 Y 軸標籤
+      const yLabels = [
+        { id: 'y-label-240', c: 240 },
+        { id: 'y-label-210', c: 210 },
+        { id: 'y-label-180', c: 180 },
+        { id: 'y-label-150', c: 150 },
+        { id: 'y-label-120', c: 120 },
+        { id: 'y-label-90',  c: 90  }
+      ];
+      yLabels.forEach(item => {
+        const el = document.getElementById(item.id);
+        if (el) el.textContent = toTempDisplay(item.c);
+      });
+
+      const p = mainScrollTriggerInstance ? mainScrollTriggerInstance.progress : 0;
+      updateActiveTelemetry(p);
+      playSynthChime(600, 0.08);
+    }
+
+    // ==========================================
+    // 2. Web Audio API 音效引擎
+    // ==========================================
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function toggleAudio() {
+      initAudio();
+      isSoundEnabled = !isSoundEnabled;
+      const soundIcon = document.getElementById('soundIcon');
+      const soundBtn = document.getElementById('soundToggleBtn');
+      
+      if (isSoundEnabled) {
+        soundIcon.innerText = '🔊';
+        soundBtn.classList.add('border-rose-400', 'text-rose-400');
+        playSynthChime(880, 0.12);
+      } else {
+        soundIcon.innerText = '🔇';
+        soundBtn.classList.remove('border-rose-400', 'text-rose-400');
+      }
+    }
+
+    function playSynthChime(freq = 440, duration = 0.1) {
+      if (!isSoundEnabled || !audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch(e) {}
+    }
+
+    function playCrackPop() {
+      if (!isSoundEnabled || !audioCtx) return;
+      try {
+        const bufferSize = audioCtx.sampleRate * 0.05;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.15));
+        }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 1800 + Math.random() * 1200;
+        filter.Q.value = 4.0;
+        const gain = audioCtx.createGain();
+        gain.gain.value = 0.35;
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        noise.start();
+      } catch(e) {}
+    }
+
+    // ==========================================
+    // 3. GSAP Master Timeline 與 RoasTime 曲線描摹
+    // ==========================================
+    let mainScrollTriggerInstance = null;
+    let activeCurveIBTSLen = 0;
+    let activeCurveProbeLen = 0;
+    let activeCurveDrumLen = 0;
+    let activeCurveRoRLen = 0;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const activeIBTS = document.getElementById('activeCurveIBTS');
+      const activeProbe = document.getElementById('activeCurveProbe');
+      const activeDrum = document.getElementById('activeCurveDrum');
+      const activeRoR = document.getElementById('activeCurveRoR');
+      const progressBar = document.getElementById('scrollProgressBar');
+
+      activeCurveIBTSLen = activeIBTS.getTotalLength();
+      activeCurveProbeLen = activeProbe.getTotalLength();
+      activeCurveDrumLen = activeDrum.getTotalLength();
+      activeCurveRoRLen = activeRoR.getTotalLength();
+
+      // 初始化 SVG StrokeDash
+      gsap.set(activeIBTS, { strokeDasharray: activeCurveIBTSLen, strokeDashoffset: activeCurveIBTSLen });
+      gsap.set(activeProbe, { strokeDasharray: activeCurveProbeLen, strokeDashoffset: activeCurveProbeLen });
+      gsap.set(activeDrum, { strokeDasharray: activeCurveDrumLen, strokeDashoffset: activeCurveDrumLen });
+      gsap.set(activeRoR, { strokeDasharray: activeCurveRoRLen, strokeDashoffset: activeCurveRoRLen });
+
+      const cards = [
+        document.getElementById('card-0'),
+        document.getElementById('card-1'),
+        document.getElementById('card-2'),
+        document.getElementById('card-3')
+      ];
+
+      gsap.set(cards[0], { autoAlpha: 1, y: 0 });
+      gsap.set([cards[1], cards[2], cards[3]], { autoAlpha: 0, y: 24 });
+
+      // 建立 Pinned 主時間軸 (3200px 平滑阻尼滾動)
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: "#pinSection",
+          start: "top top",
+          end: "+=3200",
+          pin: "#pinContent",
+          scrub: 1.0,
+          anticipatePin: 1,
+          onUpdate: (self) => {
+            const p = self.progress;
+            progressBar.style.width = `${p * 100}%`;
+            document.getElementById('footerScrollPct').innerText = `PROG: ${Math.round(p * 100)}% // ROASTIME SIM`;
+            updateActiveTelemetry(p);
+            updateTracerBeadPosition(p);
+            updateBeanMorphology(p);
+            updateEventLogHighlight(p);
+          }
+        }
+      });
+
+      mainScrollTriggerInstance = tl.scrollTrigger;
+
+      // 四條曲線同時描摹補間
+      tl.to(activeIBTS, { strokeDashoffset: 0, ease: "none", duration: 1 }, 0);
+      tl.to(activeProbe, { strokeDashoffset: 0, ease: "none", duration: 1 }, 0);
+      tl.to(activeDrum, { strokeDashoffset: 0, ease: "none", duration: 1 }, 0);
+      tl.to(activeRoR, { strokeDashoffset: 0, ease: "none", duration: 1 }, 0);
+
+      // 卡片流暢漸變切換 (對齊 RoasTime 0:00 -> 04:50 -> 08:35 -> 10:15)
+      tl.to(cards[0], { autoAlpha: 0, y: -20, duration: 0.08 }, 0.40)
+        .to(cards[1], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.47)
+        .to(cards[1], { autoAlpha: 0, y: -20, duration: 0.08 }, 0.76)
+        .to(cards[2], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.83)
+        .to(cards[2], { autoAlpha: 0, y: -20, duration: 0.08 }, 0.94)
+        .to(cards[3], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.98);
+
+      window.addEventListener('resize', () => {
+        ScrollTrigger.refresh();
+      });
+
+      setupBean3DParallax();
+      setupChartHoverInspector();
+    });
+
+    // ==========================================
+    // 4. 即時雷射追蹤探針 (Tracer Bead & Scanner Crosshair)
+    // ==========================================
+    function updateTracerBeadPosition(progress) {
+      const activeIBTS = document.getElementById('activeCurveIBTS');
+      const activeProbe = document.getElementById('activeCurveProbe');
+      const activeDrum = document.getElementById('activeCurveDrum');
+      const activeRoR = document.getElementById('activeCurveRoR');
+      if (!activeIBTS || !activeRoR) return;
+
+      const pClamp = Math.max(0, Math.min(1, progress));
+      const ptIBTS = activeIBTS.getPointAtLength(pClamp * activeCurveIBTSLen);
+      const ptProbe = activeProbe.getPointAtLength(pClamp * activeCurveProbeLen);
+      const ptDrum = activeDrum.getPointAtLength(pClamp * activeCurveDrumLen);
+      const ptRoR = activeRoR.getPointAtLength(pClamp * activeCurveRoRLen);
+
+      const tracerLineV = document.getElementById('tracerLineV');
+      const tracerBeadIBTS = document.getElementById('tracerBeadIBTS');
+      const tracerPulseHalo = document.getElementById('tracerPulseHalo');
+      const tracerBeadProbe = document.getElementById('tracerBeadProbe');
+      const tracerBeadDrum = document.getElementById('tracerBeadDrum');
+      const tracerBeadRoR = document.getElementById('tracerBeadRoR');
+
+      if (tracerLineV && tracerBeadIBTS) {
+        tracerLineV.setAttribute('x1', ptIBTS.x);
+        tracerLineV.setAttribute('x2', ptIBTS.x);
+
+        tracerBeadIBTS.setAttribute('cx', ptIBTS.x);
+        tracerBeadIBTS.setAttribute('cy', ptIBTS.y);
+
+        if (tracerPulseHalo) {
+          tracerPulseHalo.setAttribute('cx', ptIBTS.x);
+          tracerPulseHalo.setAttribute('cy', ptIBTS.y);
+        }
+
+        if (tracerBeadProbe) {
+          tracerBeadProbe.setAttribute('cx', ptIBTS.x);
+          tracerBeadProbe.setAttribute('cy', ptProbe.y);
+        }
+
+        if (tracerBeadDrum) {
+          tracerBeadDrum.setAttribute('cx', ptIBTS.x);
+          tracerBeadDrum.setAttribute('cy', ptDrum.y);
+        }
+
+        if (tracerBeadRoR) {
+          tracerBeadRoR.setAttribute('cx', ptIBTS.x);
+          tracerBeadRoR.setAttribute('cy', ptRoR.y);
+        }
+      }
+    }
+
+    // ==========================================
+    // 5. RoasTime 真實物理插值計算 (Physics & Hardware Interpolation)
+    // ==========================================
+    function updateActiveTelemetry(progress) {
+      const p = Math.max(0, Math.min(1, progress));
+      const totalSec = 615; // 10分15秒
+      const currentSeconds = Math.round(p * totalSec);
+      
+      const m = String(Math.floor(currentSeconds / 60)).padStart(2, '0');
+      const s = String(currentSeconds % 60).padStart(2, '0');
+      document.getElementById('telemetryTime').innerText = `${m}:${s}`;
+
+      let ibtsVal = 200.0;
+      let probeVal = 195.0;
+      let rorVal = 0.0;
+      let powerSetting = "P8";
+      let fanSetting = "F2";
+      let subPhaseDesc = "Charge In (入豆下衝)";
+
+      // 階段 1: 入豆急衝至回溫點 (0s ~ 75s / 01:15)
+      if (currentSeconds <= 75) {
+        const tRatio = currentSeconds / 75;
+        ibtsVal = 200.0 - (200.0 - 92.5) * (1 - Math.pow(1 - tRatio, 2));
+        probeVal = 195.0 - (195.0 - 98.0) * (1 - Math.pow(1 - tRatio, 1.8));
+        rorVal = tRatio * 3.5;
+        powerSetting = "P8";
+        fanSetting = "F2";
+        subPhaseDesc = currentSeconds < 40 ? "Bean Plunge (生豆吸熱下衝)" : "Turning Point (回溫點 92.5°C)";
+      }
+      // 階段 2: 回溫後衝頂 RoR (75s ~ 130s / 02:10)
+      else if (currentSeconds <= 130) {
+        const tRatio = (currentSeconds - 75) / 55;
+        ibtsVal = 92.5 + tRatio * (115.0 - 92.5);
+        probeVal = 98.0 + tRatio * (112.0 - 98.0);
+        rorVal = 3.5 + Math.sin(tRatio * Math.PI / 2) * (21.5 - 3.5);
+        powerSetting = "P8";
+        fanSetting = "F2";
+        subPhaseDesc = "RoR Peak (升溫速率衝頂 21.5°/m)";
+      }
+      // 階段 3: 脫水期平緩爬升至轉黃 (130s ~ 290s / 04:50)
+      else if (currentSeconds <= 290) {
+        const tRatio = (currentSeconds - 130) / 160;
+        ibtsVal = 115.0 + tRatio * (160.0 - 115.0);
+        probeVal = 112.0 + tRatio * (155.0 - 112.0);
+        rorVal = 21.5 - tRatio * (21.5 - 13.0);
+        powerSetting = currentSeconds < 240 ? "P8" : "P7";
+        fanSetting = currentSeconds < 240 ? "F2" : "F3";
+        subPhaseDesc = "Drying (脫水蒸發中)";
+      }
+      // 階段 4: 梅納褐變期 (290s ~ 515s / 08:35)
+      else if (currentSeconds <= 515) {
+        const tRatio = (currentSeconds - 290) / 225;
+        ibtsVal = 160.0 + tRatio * (196.5 - 160.0);
+        probeVal = 155.0 + tRatio * (193.5 - 155.0);
+        rorVal = 13.0 - tRatio * (13.0 - 6.5);
+        powerSetting = currentSeconds < 420 ? "P7" : "P6";
+        fanSetting = currentSeconds < 420 ? "F3" : "F4";
+        subPhaseDesc = "Maillard Reaction (芳香物生成)";
+      }
+      // 階段 5: 一爆發展期至下豆 (515s ~ 615s / 10:15)
+      else {
+        const tRatio = (currentSeconds - 515) / 100;
+        ibtsVal = 196.5 + tRatio * (208.5 - 196.5);
+        probeVal = 193.5 + tRatio * (206.5 - 193.5);
+        rorVal = 6.5 - tRatio * (6.5 - 4.2);
+        powerSetting = "P5";
+        fanSetting = "F5";
+        subPhaseDesc = "Development (一爆放熱裂解)";
+      }
+
+      // 更新數位 HUD
+      document.getElementById('telemetryIBTS').innerText = toTempDisplay(ibtsVal);
+      document.getElementById('telemetryProbe').innerText = toTempDisplay(probeVal);
+      document.getElementById('telemetryRoR').innerText = `${rorVal.toFixed(1)}°/m`;
+      document.getElementById('telemetryPhaseSub').innerText = subPhaseDesc;
+
+      // 更新 Bullet 機台 P/F/D 檔位
+      document.getElementById('badgePower').innerText = powerSetting;
+      document.getElementById('badgeFan').innerText = fanSetting;
+
+      // 動態 DTR 計算
+      const dtrEl = document.getElementById('telemetryDTR');
+      const dtrSub = document.getElementById('dtrSubText');
+      if (currentSeconds < 515) {
+        dtrEl.innerText = '0.0%';
+        dtrSub.innerText = '起爆前 (Pre-FC)';
+      } else {
+        const devSec = currentSeconds - 515;
+        const currentDTR = (devSec / currentSeconds) * 100;
+        dtrEl.innerText = `${currentDTR.toFixed(1)}%`;
+        dtrSub.innerText = `發展 ${Math.floor(devSec / 60)}:${String(devSec % 60).padStart(2, '0')}`;
+      }
+
+      // 判斷當前 4 階段索引 (0: 回溫, 1: 轉黃, 2: 一爆, 3: 下豆)
+      let currentIdx = 0;
+      if (p >= 0.95) currentIdx = 3;
+      else if (p >= 0.78) currentIdx = 2;
+      else if (p >= 0.42) currentIdx = 1;
+
+      if (lastActiveIdx !== currentIdx) {
+        lastActiveIdx = currentIdx;
+        onPhaseChanged(currentIdx);
+      }
+
+      // 一爆階段 (Phase 2) 隨機播放清脆劈啪聲
+      if (currentIdx === 2 && Math.random() < 0.08) {
+        playCrackPop();
+        spawnChaffSpark();
+      }
+    }
+
+    function onPhaseChanged(idx) {
+      document.querySelectorAll('.hud-btn').forEach((btn, i) => {
+        if (i === idx) {
+          btn.classList.add('bg-slate-800', 'text-white', 'border-rose-400', 'shadow-md');
+        } else {
+          btn.classList.remove('bg-slate-800', 'text-white', 'border-rose-400', 'shadow-md');
+        }
+      });
+
+      for (let i = 0; i < 4; i++) {
+        const ring = document.getElementById(`pulseRing-${i}`);
+        const dot = document.getElementById(`innerDot-${i}`);
+        if (ring && dot) {
+          if (i === idx) {
+            gsap.to(dot, { r: 8, duration: 0.3 });
+            gsap.fromTo(ring, 
+              { r: 14, opacity: 0.9 }, 
+              { r: 26, opacity: 0, duration: 1.2, repeat: -1, ease: "power1.out" }
+            );
+          } else {
+            gsap.killTweensOf(ring);
+            gsap.to(ring, { r: 14, opacity: 0, duration: 0.2 });
+            gsap.to(dot, { r: 5, duration: 0.2 });
+          }
+        }
+      }
+
+      if (lastPlayedPhase !== idx) {
+        lastPlayedPhase = idx;
+        playSynthChime(440 + idx * 110, 0.15);
+      }
+    }
+
+    // ==========================================
+    // 6. 咖啡豆微觀相變與裂變動畫
+    // ==========================================
+    function updateBeanMorphology(progress) {
+      const p = Math.max(0, Math.min(1, progress));
+      const stop0 = document.getElementById('beanStop0');
+      const stop1 = document.getElementById('beanStop1');
+      const stop2 = document.getElementById('beanStop2');
+      const beanCrease = document.getElementById('beanCrease');
+      const crackFractures = document.getElementById('crackFractures');
+      const steamContainer = document.getElementById('steamContainer');
+      const coolingFanRing = document.getElementById('coolingFanRing');
+      const stateBadge = document.getElementById('beanStateBadge');
+      const volumeText = document.getElementById('beanVolumeText');
+      const coffeeBeanSvg = document.getElementById('coffeeBeanSvg');
+
+      const scale = 1.0 + p * 0.38;
+      if (coffeeBeanSvg) {
+        coffeeBeanSvg.style.transform = `scale(${scale})`;
+      }
+      if (volumeText) {
+        volumeText.innerText = `${Math.round(scale * 100)}%`;
+      }
+
+      if (p < 0.42) {
+        stop0.setAttribute('stop-color', '#84cc16');
+        stop1.setAttribute('stop-color', '#65a30d');
+        stop2.setAttribute('stop-color', '#365314');
+        steamContainer.style.opacity = '1';
+        coolingFanRing.style.opacity = '0';
+        crackFractures.setAttribute('opacity', '0');
+        beanCrease.setAttribute('stroke', '#1e293b');
+        beanCrease.setAttribute('stroke-width', '5');
+        stateBadge.innerText = 'STATE: 脫水吸熱 (DEHYDRATION)';
+        stateBadge.className = 'text-xs font-mono px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 font-semibold';
+      } else if (p < 0.78) {
+        stop0.setAttribute('stop-color', '#f59e0b');
+        stop1.setAttribute('stop-color', '#d97706');
+        stop2.setAttribute('stop-color', '#78350f');
+        steamContainer.style.opacity = '0.3';
+        coolingFanRing.style.opacity = '0';
+        crackFractures.setAttribute('opacity', '0');
+        beanCrease.setAttribute('stroke', '#451a03');
+        beanCrease.setAttribute('stroke-width', '6');
+        stateBadge.innerText = 'STATE: 梅納褐變 (MAILLARD)';
+        stateBadge.className = 'text-xs font-mono px-3 py-1 rounded-full bg-amber-950/80 border border-amber-500/40 text-amber-300 font-semibold';
+      } else if (p < 0.95) {
+        stop0.setAttribute('stop-color', '#b45309');
+        stop1.setAttribute('stop-color', '#78350f');
+        stop2.setAttribute('stop-color', '#451a03');
+        steamContainer.style.opacity = '0';
+        coolingFanRing.style.opacity = '0';
+        crackFractures.setAttribute('opacity', '1');
+        beanCrease.setAttribute('stroke', '#292524');
+        beanCrease.setAttribute('stroke-width', '8');
+        stateBadge.innerText = 'STATE: 一爆裂解 (CRACKING)';
+        stateBadge.className = 'text-xs font-mono px-3 py-1 rounded-full bg-rose-950/80 border border-rose-500/40 text-rose-300 font-semibold';
+      } else {
+        stop0.setAttribute('stop-color', '#78350f');
+        stop1.setAttribute('stop-color', '#451a03');
+        stop2.setAttribute('stop-color', '#1c1917');
+        steamContainer.style.opacity = '0';
+        coolingFanRing.style.opacity = '1';
+        crackFractures.setAttribute('opacity', '0.4');
+        beanCrease.setAttribute('stroke', '#1c1917');
+        beanCrease.setAttribute('stroke-width', '8.5');
+        stateBadge.innerText = 'STATE: 下豆驟冷 (QUENCHED)';
+        stateBadge.className = 'text-xs font-mono px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-semibold';
+      }
+    }
+
+    function spawnChaffSpark() {
+      const container = document.getElementById('chaffContainer');
+      if (!container) return;
+
+      const spark = document.createElement('div');
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 40 + Math.random() * 80;
+      const tx = `${Math.cos(angle) * distance}px`;
+      const ty = `${Math.sin(angle) * distance}px`;
+
+      spark.className = 'spark-flake absolute w-2 h-2 rounded-full bg-rose-400 pointer-events-none shadow-sm';
+      spark.style.setProperty('--tx', tx);
+      spark.style.setProperty('--ty', ty);
+      spark.style.left = '50%';
+      spark.style.top = '50%';
+
+      container.appendChild(spark);
+      setTimeout(() => {
+        spark.remove();
+      }, 800);
+    }
+
+    function setupBean3DParallax() {
+      const stage = document.getElementById('beanStageCard');
+      const tiltEl = document.querySelector('.bean-card-tilt');
+      if (!stage || !tiltEl) return;
+
+      stage.addEventListener('mousemove', (e) => {
+        const rect = stage.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        const rotateX = (-y / rect.height) * 20;
+        const rotateY = (x / rect.width) * 20;
+        tiltEl.style.transform = `perspective(600px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      });
+
+      stage.addEventListener('mouseleave', () => {
+        tiltEl.style.transform = `perspective(600px) rotateX(0deg) rotateY(0deg)`;
+      });
+    }
+
+    // ==========================================
+    // 7. 烘焙日誌高亮連動 (Event Log Highlight Sync)
+    // ==========================================
+    function updateEventLogHighlight(progress) {
+      const totalSec = 615;
+      const currentSec = progress * totalSec;
+      
+      const eventTimeMarkers = [0, 75, 130, 240, 290, 420, 515, 615];
+      let activeItemIdx = 0;
+      for (let i = eventTimeMarkers.length - 1; i >= 0; i--) {
+        if (currentSec >= eventTimeMarkers[i]) {
+          activeItemIdx = i;
+          break;
+        }
+      }
+
+      for (let i = 0; i < 8; i++) {
+        const el = document.getElementById(`log-item-${i}`);
+        if (el) {
+          if (i === activeItemIdx) {
+            el.classList.add('bg-rose-950/30', 'border-rose-500/50', 'ring-1', 'ring-rose-500/40');
+            el.classList.remove('bg-slate-900/40', 'border-slate-800/80');
+          } else {
+            el.classList.remove('bg-rose-950/30', 'border-rose-500/50', 'ring-1', 'ring-rose-500/40');
+            el.classList.add('bg-slate-900/40', 'border-slate-800/80');
+          }
+        }
+      }
+    }
+
+    function toggleEventLogDrawer() {
+      const drawer = document.getElementById('eventLogDrawer');
+      const btn = document.getElementById('logToggleBtn');
+      if (!drawer) return;
+      if (drawer.classList.contains('translate-x-full')) {
+        drawer.classList.remove('translate-x-full');
+        btn.classList.add('text-rose-400', 'border-rose-500/40');
+      } else {
+        drawer.classList.add('translate-x-full');
+        btn.classList.remove('text-rose-400', 'border-rose-500/40');
+      }
+    }
+
+    // ==========================================
+    // 8. 參考曲線與多軌圖例開關 (Toggle Curves)
+    // ==========================================
+    function toggleReferenceCurve() {
+      isRefCurveVisible = !isRefCurveVisible;
+      const refGroup = document.getElementById('refProfileGroup');
+      const btn = document.getElementById('toggleRefBtn');
+      const pillBtn = document.getElementById('btn-toggle-ref');
+      
+      if (refGroup) {
+        refGroup.style.display = isRefCurveVisible ? 'block' : 'none';
+      }
+      if (btn) {
+        if (isRefCurveVisible) {
+          btn.classList.remove('opacity-40');
+        } else {
+          btn.classList.add('opacity-40');
+        }
+      }
+      if (pillBtn) {
+        pillBtn.className = isRefCurveVisible ? 'curve-toggle-btn active flex items-center gap-1.5 text-slate-400 font-medium px-1.5 py-0.5 rounded border border-slate-700 bg-slate-900/50' : 'curve-toggle-btn inactive flex items-center gap-1.5 text-slate-400 font-medium px-1.5 py-0.5 rounded border border-slate-700 bg-slate-900/50';
+      }
+    }
+
+    function toggleCurve(curveKey) {
+      curveVisibility[curveKey] = !curveVisibility[curveKey];
+      const isVisible = curveVisibility[curveKey];
+      const btn = document.getElementById(`btn-toggle-${curveKey}`);
+
+      let targetEl = null;
+      let beadEl = null;
+      if (curveKey === 'ibts') {
+        targetEl = document.getElementById('activeCurveIBTS');
+        beadEl = document.getElementById('tracerBeadIBTS');
+        const halo = document.getElementById('tracerPulseHalo');
+        if (halo) halo.style.display = isVisible ? 'block' : 'none';
+      }
+      if (curveKey === 'probe') {
+        targetEl = document.getElementById('activeCurveProbe');
+        beadEl = document.getElementById('tracerBeadProbe');
+      }
+      if (curveKey === 'drum') {
+        targetEl = document.getElementById('activeCurveDrum');
+        beadEl = document.getElementById('tracerBeadDrum');
+      }
+      if (curveKey === 'ror') {
+        targetEl = document.getElementById('activeCurveRoR');
+        beadEl = document.getElementById('tracerBeadRoR');
+      }
+
+      if (targetEl) {
+        targetEl.style.display = isVisible ? 'block' : 'none';
+      }
+      if (beadEl) {
+        beadEl.style.display = isVisible ? 'block' : 'none';
+      }
+      if (btn) {
+        if (isVisible) {
+          btn.classList.remove('inactive');
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+          btn.classList.add('inactive');
+        }
+      }
+    }
+
+    // ==========================================
+    // 9. 圖表十字準星懸停檢視 (Hover Inspector)
+    // ==========================================
+    function setupChartHoverInspector() {
+      const container = document.getElementById('chartContainerDiv');
+      const hoverText = document.getElementById('hoverInfoText');
+      if (!container || !hoverText) return;
+
+      container.addEventListener('mousemove', (e) => {
+        const rect = container.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const svgX = (mouseX / rect.width) * 1000;
+        const pct = Math.max(0, Math.min(1, (svgX - 80) / (913 - 80)));
+        const sec = Math.round(pct * 615);
+        const m = String(Math.floor(sec / 60)).padStart(2, '0');
+        const s = String(sec % 60).padStart(2, '0');
+        hoverText.innerHTML = `<span class="text-white font-bold">${m}:${s}</span> | <span class="text-rose-400">點擊任意位置同步</span>`;
+      });
+
+      container.addEventListener('mouseleave', () => {
+        hoverText.innerText = '滑動以檢視時間點';
+      });
+
+      // 點擊圖表任意處可快速跳轉至該烘焙時間
+      container.addEventListener('click', (e) => {
+        if (!mainScrollTriggerInstance) return;
+        const rect = container.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const svgX = (mouseX / rect.width) * 1000;
+        const pct = Math.max(0, Math.min(1, (svgX - 80) / (913 - 80)));
+        const start = mainScrollTriggerInstance.start;
+        const end = mainScrollTriggerInstance.end;
+        const targetY = start + (end - start) * pct;
+
+        gsap.to(window, {
+          scrollTo: { y: targetY, autoKill: false },
+          duration: 0.8,
+          ease: "power2.out"
+        });
+      });
+    }
+
+    // ==========================================
+    // 10. 雙向跳轉與自動巡航
+    // ==========================================
+    function jumpToPhase(phaseIndex) {
+      if (!mainScrollTriggerInstance) return;
+
+      if (isAutoTouring) toggleAutoTour();
+
+      const checkpoint = phaseCheckpoints[phaseIndex];
+      const start = mainScrollTriggerInstance.start;
+      const end = mainScrollTriggerInstance.end;
+      const targetY = start + (end - start) * checkpoint.progress;
+
+      gsap.to(window, {
+        scrollTo: { y: targetY, autoKill: false },
+        duration: 1.2,
+        ease: "power2.inOut"
+      });
+
+      playSynthChime(520, 0.1);
+    }
+
+    function toggleAutoTour() {
+      if (!mainScrollTriggerInstance) return;
+
+      const tourBtn = document.getElementById('autoTourBtn');
+      const tourText = document.getElementById('tourBtnText');
+      const playIcon = document.getElementById('tourPlayIcon');
+
+      if (!isAutoTouring) {
+        isAutoTouring = true;
+        initAudio();
+        tourBtn.classList.replace('text-rose-300', 'text-white');
+        tourBtn.classList.add('bg-rose-500/30', 'border-rose-400');
+        tourText.innerText = '暫停';
+        playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+
+        const start = mainScrollTriggerInstance.start;
+        const end = mainScrollTriggerInstance.end;
+        const currentY = window.scrollY;
+
+        const targetEnd = (currentY >= end - 10) ? start : end;
+        const duration = Math.max(4, Math.abs(targetEnd - currentY) / 220);
+
+        autoTourTween = gsap.to(window, {
+          scrollTo: { y: targetEnd, autoKill: true },
+          duration: duration,
+          ease: "none",
+          onComplete: () => {
+            if (isAutoTouring) toggleAutoTour();
+          }
+        });
+      } else {
+        isAutoTouring = false;
+        if (autoTourTween) autoTourTween.kill();
+        tourBtn.classList.replace('text-white', 'text-rose-300');
+        tourBtn.classList.remove('bg-rose-500/30', 'border-rose-400');
+        tourText.innerText = '巡航';
+        playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+      }
+    }
+
+    // ==========================================
+    // 11. 感官杯測雷達圖 (Sensory Cupping Radar)
+    // ==========================================
+    const radarPresets = {
+      light: {
+        points: "200,68 310,165 240,270 135,290 80,168",
+        dots: [
+          { cx: 200, cy: 68 },
+          { cx: 310, cy: 165 },
+          { cx: 240, cy: 270 },
+          { cx: 135, cy: 290 },
+          { cx: 80,  cy: 168 }
+        ],
+        notes: "杯測風味描述：茉莉花香、白桃、佛手柑、野莓明亮果酸、蜂蜜綠茶清新尾韻"
+      },
+      medium: {
+        points: "200,105 328,160 275,300 150,265 95,175",
+        dots: [
+          { cx: 200, cy: 105 },
+          { cx: 328, cy: 160 },
+          { cx: 275, cy: 300 },
+          { cx: 150, cy: 265 },
+          { cx: 95,  cy: 175 }
+        ],
+        notes: "杯測風味描述：太妃糖、榛果巧克力、成熟紅富士蘋果、黑櫻桃、圓潤楓糖漿餘韻"
+      },
+      dark: {
+        points: "200,160 280,172 315,315 170,240 120,185",
+        dots: [
+          { cx: 200, cy: 160 },
+          { cx: 280, cy: 172 },
+          { cx: 315, cy: 315 },
+          { cx: 170, cy: 240 },
+          { cx: 120, cy: 185 }
+        ],
+        notes: "杯測風味描述：濃郁黑巧克力、煙燻烏梅、雪松木質調、烤胡桃、重奶油醇厚油脂感"
+      }
+    };
+
+    function setRoastPreset(presetKey) {
+      const preset = radarPresets[presetKey];
+      if (!preset) return;
+
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.remove('bg-rose-500/20', 'border', 'border-rose-500/40', 'text-white');
+        btn.classList.add('text-slate-400');
+      });
+      const activeBtn = document.getElementById(`presetBtn-${presetKey}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-rose-500/20', 'border', 'border-rose-500/40', 'text-white');
+        activeBtn.classList.remove('text-slate-400');
+      }
+
+      const radarPolygon = document.getElementById('radarPolygon');
+      gsap.to(radarPolygon, {
+        attr: { points: preset.points },
+        duration: 0.6,
+        ease: "power2.out"
+      });
+
+      preset.dots.forEach((dotPos, idx) => {
+        const dot = document.getElementById(`radarDot-${idx}`);
+        if (dot) {
+          gsap.to(dot, {
+            attr: { cx: dotPos.cx, cy: dotPos.cy },
+            duration: 0.6,
+            ease: "power2.out"
+          });
+        }
+      });
+
+      const notesEl = document.getElementById('radarFlavorNotes');
+      if (notesEl) {
+        notesEl.innerHTML = `<span class="text-rose-400 font-bold">${preset.notes}</span>`;
+      }
+
+      playSynthChime(640, 0.1);
+    }
+
+    // ==========================================
+    // 12. 匯出報告彈窗 (Export Modal)
+    // ==========================================
+    function openExportModal() {
+      const modal = document.getElementById('exportModal');
+      if (modal) {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        playSynthChime(700, 0.1);
+      }
+    }
+
+    function closeExportModal() {
+      const modal = document.getElementById('exportModal');
+      if (modal) {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+      }
+    }
+
+    // ==========================================
+    // 13. 全域鍵盤快捷鍵監聽
+    // ==========================================
+    window.addEventListener('keydown', (e) => {
+      if (['input', 'textarea'].includes(document.activeElement.tagName.toLowerCase())) return;
+
+      switch(e.key) {
+        case '1': jumpToPhase(0); break;
+        case '2': jumpToPhase(1); break;
+        case '3': jumpToPhase(2); break;
+        case '4': jumpToPhase(3); break;
+        case ' ':
+          e.preventDefault();
+          toggleAutoTour();
+          break;
+        case 'm':
+        case 'M':
+          toggleAudio();
+          break;
+        case 'c':
+        case 'C':
+        case 'f':
+        case 'F':
+          toggleTempUnit();
+          break;
+        case 'l':
+        case 'L':
+          toggleEventLogDrawer();
+          break;
+        case 'r':
+        case 'R':
+          toggleReferenceCurve();
+          break;
+        case 'Escape':
+          closeExportModal();
+          break;
+      }
+    });
+  </script>
+</body>
+</html>

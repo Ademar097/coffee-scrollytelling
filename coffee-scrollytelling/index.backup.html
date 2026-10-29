@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>精品咖啡烘焙工藝：Scrollytelling 向量動效展示</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- GSAP & Plugins CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollToPlugin.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              amber: '#f59e0b',
+              orange: '#f97316',
+              cyan: '#06b6d4',
+              emerald: '#10b981'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* 螢光濾鏡定義 */
+    .glow-amber {
+      filter: drop-shadow(0 0 10px rgba(245, 158, 11, 0.75)) drop-shadow(0 0 20px rgba(245, 158, 11, 0.3));
+    }
+    .glow-cyan {
+      filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.8));
+    }
+    .glow-node {
+      filter: drop-shadow(0 0 12px currentColor);
+    }
+
+    /* 檢查點節點互動平滑度 */
+    .node-interactive {
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+    .node-interactive:hover {
+      transform: scale(1.3);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-amber-500/30 selection:text-amber-200">
+
+  <!-- 頂部即時進度條與全域 HUD 導航 -->
+  <header class="fixed top-0 left-0 w-full z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80">
+    <!-- 頂部進度條 -->
+    <div id="scrollProgressBar" class="h-1 bg-gradient-to-r from-cyan-400 via-amber-400 to-orange-500 w-0 transition-all duration-75"></div>
+    
+    <div class="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+        <span class="font-bold tracking-wider text-xs uppercase text-slate-300">Roast Profile Engine</span>
+      </div>
+
+      <!-- HUD 快捷切換按鈕群 -->
+      <nav class="flex items-center gap-2 sm:gap-3 text-xs">
+        <button onclick="jumpToPhase(0)" id="hud-btn-0" class="hud-btn px-3 py-1.5 rounded-lg border border-slate-700/80 bg-slate-900/60 text-slate-400 hover:text-cyan-400 transition-all">
+          Phase 01: 入豆脫水
+        </button>
+        <button onclick="jumpToPhase(1)" id="hud-btn-1" class="hud-btn px-3 py-1.5 rounded-lg border border-slate-700/80 bg-slate-900/60 text-slate-400 hover:text-amber-400 transition-all">
+          Phase 02: 梅納反應
+        </button>
+        <button onclick="jumpToPhase(2)" id="hud-btn-2" class="hud-btn px-3 py-1.5 rounded-lg border border-slate-700/80 bg-slate-900/60 text-slate-400 hover:text-orange-400 transition-all">
+          Phase 03: 一爆初起
+        </button>
+        <button onclick="jumpToPhase(3)" id="hud-btn-3" class="hud-btn px-3 py-1.5 rounded-lg border border-slate-700/80 bg-slate-900/60 text-slate-400 hover:text-emerald-400 transition-all">
+          Phase 04: 下豆冷卻
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- 1. Hero 引言區塊 -->
+  <section class="min-h-screen flex flex-col justify-center items-center text-center px-6 relative overflow-hidden">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.08)_0%,transparent_70%)] pointer-events-none"></div>
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs mb-6">
+      <span>精品咖啡烘焙微動效展演</span>
+    </div>
+    <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight max-w-3xl leading-tight">
+      精準熱力學與化學反應的<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400">動態曲線敘事</span>
+    </h1>
+    <p class="mt-6 text-slate-400 text-base md:text-lg max-w-xl leading-relaxed">
+      向下滾動以推進 RoR 溫升曲線。透過向量路徑實時描摹，觀察生豆自吸熱脫水至裂解釋香的化學質變歷程。
+    </p>
+    <div class="mt-12 flex flex-col items-center gap-2 text-slate-500 text-xs animate-bounce">
+      <span>向下滾動探索</span>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 2. Pinned 核心展示視窗區塊 -->
+  <section id="pinSection" class="relative w-full h-screen overflow-hidden bg-slate-950 border-y border-slate-800">
+    <div id="pinContent" class="w-full h-full relative flex items-center justify-center max-w-7xl mx-auto px-6">
+      
+      <!-- 狀態儀表與資訊面板（左側固定） -->
+      <div class="absolute left-8 md:left-12 top-24 z-20 pointer-events-none">
+        <div class="text-[11px] uppercase tracking-widest text-slate-500 font-mono">Curated Phase Indicator</div>
+        <div id="phaseIndicatorText" class="text-xl md:text-2xl font-bold text-cyan-400 mt-1 transition-all">
+          PHASE 01 : 脫水吸熱期
+        </div>
+        <div id="phaseTempText" class="text-sm font-mono text-slate-400 mt-1">
+          BT: 152°C | RoR: 11.8°C/min
+        </div>
+      </div>
+
+      <!-- 中央向量 SVG 畫布：包含背景底軌與動態發光描邊軌 -->
+      <svg class="w-full h-[65vh] max-h-[560px] z-10 overflow-visible" viewBox="0 0 1000 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- 動態漸層定義 -->
+          <linearGradient id="roastPathGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#06b6d4" />
+            <stop offset="40%" stop-color="#f59e0b" />
+            <stop offset="75%" stop-color="#f97316" />
+            <stop offset="100%" stop-color="#10b981" />
+          </linearGradient>
+
+          <!-- 網格點底紋 -->
+          <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.75" stroke-opacity="0.4" />
+          </pattern>
+        </defs>
+
+        <!-- 烘焙溫升座標參考背景網格 -->
+        <rect x="0" y="0" width="1000" height="450" fill="url(#gridPattern)" />
+
+        <!-- 靜態曲線導軌底軌 -->
+        <path
+          id="baseCurve"
+          d="M 60,370 C 220,380 250,290 400,240 C 550,190 630,220 740,140 C 830,75 880,85 940,95"
+          stroke="#334155"
+          stroke-width="5"
+          stroke-linecap="round"
+          stroke-dasharray="6 6"
+        />
+
+        <!-- 動態發光描邊軌 -->
+        <path
+          id="activeCurve"
+          d="M 60,370 C 220,380 250,290 400,240 C 550,190 630,220 740,140 C 830,75 880,85 940,95"
+          stroke="url(#roastPathGradient)"
+          stroke-width="6"
+          stroke-linecap="round"
+          class="glow-amber"
+        />
+
+        <!-- 檢查點節點群（具備點擊、Hover 與 GSAP 狀態聯動） -->
+        <!-- 節點 1: 回溫與脫水 (60, 370) -->
+        <g id="node-0" class="node-interactive text-cyan-400" onclick="jumpToPhase(0)">
+          <circle id="pulseRing-0" cx="60" cy="370" r="14" fill="none" stroke="#06b6d4" stroke-width="2" opacity="0.6" />
+          <circle cx="60" cy="370" r="14" fill="#0f172a" stroke="#06b6d4" stroke-width="3" />
+          <circle id="innerDot-0" cx="60" cy="370" r="5" fill="#06b6d4" />
+          <text x="60" y="405" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600">回溫點 / 脫水</text>
+        </g>
+
+        <!-- 節點 2: 梅納轉黃 (400, 240) -->
+        <g id="node-1" class="node-interactive text-amber-400" onclick="jumpToPhase(1)">
+          <circle id="pulseRing-1" cx="400" cy="240" r="14" fill="none" stroke="#f59e0b" stroke-width="2" opacity="0" />
+          <circle cx="400" cy="240" r="14" fill="#0f172a" stroke="#f59e0b" stroke-width="3" />
+          <circle id="innerDot-1" cx="400" cy="240" r="5" fill="#f59e0b" />
+          <text x="400" y="275" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600">轉黃點 (160°C)</text>
+        </g>
+
+        <!-- 節點 3: 一爆劇烈裂解 (740, 140) -->
+        <g id="node-2" class="node-interactive text-orange-400" onclick="jumpToPhase(2)">
+          <circle id="pulseRing-2" cx="740" cy="140" r="14" fill="none" stroke="#f97316" stroke-width="2" opacity="0" />
+          <circle cx="740" cy="140" r="14" fill="#0f172a" stroke="#f97316" stroke-width="3" />
+          <circle id="innerDot-2" cx="740" cy="140" r="5" fill="#f97316" />
+          <text x="740" y="175" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600">一爆初起 (First Crack)</text>
+        </g>
+
+        <!-- 節點 4: 出鍋冷卻 (940, 95) -->
+        <g id="node-3" class="node-interactive text-emerald-400" onclick="jumpToPhase(3)">
+          <circle id="pulseRing-3" cx="940" cy="95" r="14" fill="none" stroke="#10b981" stroke-width="2" opacity="0" />
+          <circle cx="940" cy="95" r="14" fill="#0f172a" stroke="#10b981" stroke-width="3" />
+          <circle id="innerDot-3" cx="940" cy="95" r="5" fill="#10b981" />
+          <text x="940" y="130" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600">下豆冷卻 (Drop)</text>
+        </g>
+      </svg>
+
+      <!-- 4 階段浮動內容卡片容器（重疊定位 + autoAlpha 絲滑切換） -->
+      <div class="absolute bottom-10 inset-x-6 md:inset-x-auto md:right-16 md:bottom-16 w-full max-w-md h-44 pointer-events-none">
+        
+        <!-- 卡片 1 -->
+        <div id="card-0" class="phase-card absolute inset-0 bg-slate-900/90 border border-slate-700/80 p-5 rounded-2xl backdrop-blur-md shadow-2xl">
+          <div class="text-xs font-mono text-cyan-400 font-semibold tracking-wider">PHASE 01 // 00:00 - 04:30</div>
+          <h3 class="text-lg font-bold text-white mt-1">入豆吸熱與含水率均勻化</h3>
+          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+            生豆入鍋後吸收滾筒儲備熱能，達到回溫點（Turning Point）。此階段首重透過穩定風門帶走生豆蒸散的游離水氣，確保豆芯受熱均勻。
+          </p>
+        </div>
+
+        <!-- 卡片 2 -->
+        <div id="card-1" class="phase-card absolute inset-0 bg-slate-900/90 border border-slate-700/80 p-5 rounded-2xl backdrop-blur-md shadow-2xl">
+          <div class="text-xs font-mono text-amber-400 font-semibold tracking-wider">PHASE 02 // 04:30 - 08:00</div>
+          <h3 class="text-lg font-bold text-white mt-1">梅納反應與芳香物質前驅物生成</h3>
+          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+            豆色轉為金黃並伴隨烤麵包香氣。胺基酸與還原糖在熱力驅動下快速縮合，生成複雜的類黑素，奠定咖啡厚實醇厚度與基礎風味基調。
+          </p>
+        </div>
+
+        <!-- 卡片 3 -->
+        <div id="card-2" class="phase-card absolute inset-0 bg-slate-900/90 border border-slate-700/80 p-5 rounded-2xl backdrop-blur-md shadow-2xl">
+          <div class="text-xs font-mono text-orange-400 font-semibold tracking-wider">PHASE 03 // 08:00 - 09:40</div>
+          <h3 class="text-lg font-bold text-white mt-1">一爆劇烈裂解與發展時間控制</h3>
+          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+            內部蒸氣壓力撐破細胞壁釋放密集爆裂聲，烘焙進入放熱反應。嚴格控管 RoR 衰退斜率（DTR 控制於 13-16%），保留細緻的花果酸質調性。
+          </p>
+        </div>
+
+        <!-- 卡片 4 -->
+        <div id="card-3" class="phase-card absolute inset-0 bg-slate-900/90 border border-slate-700/80 p-5 rounded-2xl backdrop-blur-md shadow-2xl">
+          <div class="text-xs font-mono text-emerald-400 font-semibold tracking-wider">PHASE 04 // 09:40 - 10:30</div>
+          <h3 class="text-lg font-bold text-white mt-1">精準出鍋排氣與急速風冷</h3>
+          <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+            達到預定烘焙度（Agtron 數值）後果斷開閘出鍋。藉由強力抽風在 2.5 分鐘內將豆溫驟降至室溫，精準鎖定焦糖化終點，避免餘熱自焙。
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 3. 後續結論數據區塊 -->
+  <section class="min-h-screen py-24 px-6 max-w-5xl mx-auto flex flex-col justify-center">
+    <div class="border-t border-slate-800 pt-16">
+      <div class="text-xs font-mono uppercase tracking-widest text-amber-500 mb-2">Thermal Metrics</div>
+      <h2 class="text-3xl font-extrabold text-white">烘焙物理常數與熱傳導指標</h2>
+      <p class="text-slate-400 mt-3 text-sm leading-relaxed max-w-2xl">
+        透過即時數位化溫控與 Scrollytelling 視覺化，烘焙師得以及時調配傳導熱、對流熱與輻射熱平衡，實現可重複的卓越杯測品質。
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+        <div class="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl">
+          <div class="text-3xl font-mono font-bold text-amber-400">14.8%</div>
+          <div class="text-sm font-semibold text-slate-200 mt-2">DTR 發展時間比</div>
+          <div class="text-xs text-slate-400 mt-1">一爆開始至下豆時間佔總時長比例，確保酸甜平衡無澀味。</div>
+        </div>
+        <div class="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl">
+          <div class="text-3xl font-mono font-bold text-cyan-400">6.2°C/m</div>
+          <div class="text-sm font-semibold text-slate-200 mt-2">一爆進展 RoR</div>
+          <div class="text-xs text-slate-400 mt-1">維持平滑遞減趨勢，有效杜絕失速（Flick）或悶蒸（Crash）。</div>
+        </div>
+        <div class="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl">
+          <div class="text-3xl font-mono font-bold text-emerald-400">&lt; 150s</div>
+          <div class="text-sm font-semibold text-slate-200 mt-2">冷卻盤均勻均溫</div>
+          <div class="text-xs text-slate-400 mt-1">抽風負壓冷卻效率，完整保留揮發性芳香化合物與花香酯類。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GSAP 與雙向聯動邏輯 -->
+  <script>
+    gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+
+    // 階段設定：包含檢查點進度比例 Pi 與顯示資訊
+    const phaseCheckpoints = [
+      { progress: 0.0, name: "PHASE 01 : 脫水吸熱期", temp: "BT: 152°C | RoR: 11.8°C/min", color: "#06b6d4" },
+      { progress: 0.38, name: "PHASE 02 : 梅納黃化期", temp: "BT: 168°C | RoR: 8.5°C/min", color: "#f59e0b" },
+      { progress: 0.76, name: "PHASE 03 : 一爆發展期", temp: "BT: 198°C | RoR: 5.4°C/min", color: "#f97316" },
+      { progress: 1.0, name: "PHASE 04 : 下豆急速冷卻", temp: "BT: 208°C | Complete", color: "#10b981" }
+    ];
+
+    let mainScrollTriggerInstance = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const activeCurve = document.getElementById('activeCurve');
+      const progressBar = document.getElementById('scrollProgressBar');
+      
+      // 1. 動態計算 SVG 貝茲曲線全長並初始化
+      const pathLength = activeCurve.getTotalLength();
+      gsap.set(activeCurve, {
+        strokeDasharray: pathLength,
+        strokeDashoffset: pathLength
+      });
+
+      const cards = [
+        document.getElementById('card-0'),
+        document.getElementById('card-1'),
+        document.getElementById('card-2'),
+        document.getElementById('card-3')
+      ];
+
+      // 卡片初始狀態設定：使用 autoAlpha 確保順滾逆滾無閃爍
+      gsap.set(cards[0], { autoAlpha: 1, y: 0 });
+      gsap.set([cards[1], cards[2], cards[3]], { autoAlpha: 0, y: 24 });
+
+      // 2. 建立釘選 Master Timeline 與物理阻尼
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: "#pinSection",
+          start: "top top",
+          end: "+=2600",
+          pin: "#pinContent",
+          scrub: 1.0,    // 1 秒平滑慣性阻尼
+          anticipatePin: 1,
+          onUpdate: (self) => {
+            const p = self.progress;
+            progressBar.style.width = `${p * 100}%`;
+            updateActivePhase(p);
+          }
+        }
+      });
+
+      mainScrollTriggerInstance = tl.scrollTrigger;
+
+      // 3. SVG 筆畫描摹插值
+      tl.to(activeCurve, {
+        strokeDashoffset: 0,
+        ease: "none",
+        duration: 1
+      }, 0);
+
+      // 4. 卡片切換動畫連動（完全使用 autoAlpha，順逆滾皆滑順）
+      tl.to(cards[0], { autoAlpha: 0, y: -20, duration: 0.08 }, 0.25)
+        .to(cards[1], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.33)
+        .to(cards[1], { autoAlpha: 0, y: -20, duration: 0.08 }, 0.62)
+        .to(cards[2], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.70)
+        .to(cards[2], { autoAlpha: 0, y: -20, duration: 0.08 }, 0.88)
+        .to(cards[3], { autoAlpha: 1, y: 0, duration: 0.08 }, 0.94);
+
+      // 視窗 Resize 時自動重校正數值
+      window.addEventListener('resize', () => {
+        ScrollTrigger.refresh();
+      });
+    });
+
+    // 依滾動進度更新 HUD 按鈕、左側儀表與 SVG 節點狀態
+    let lastActiveIdx = -1;
+    function updateActivePhase(progress) {
+      let currentIdx = 0;
+      if (progress >= 0.88) currentIdx = 3;
+      else if (progress >= 0.60) currentIdx = 2;
+      else if (progress >= 0.25) currentIdx = 1;
+
+      if (lastActiveIdx !== currentIdx) {
+        lastActiveIdx = currentIdx;
+
+        // 1. 更新 HUD 按鈕樣式
+        document.querySelectorAll('.hud-btn').forEach((btn, idx) => {
+          if (idx === currentIdx) {
+            btn.classList.add('bg-slate-800', 'text-white', 'border-amber-400', 'shadow-lg');
+          } else {
+            btn.classList.remove('bg-slate-800', 'text-white', 'border-amber-400', 'shadow-lg');
+          }
+        });
+
+        // 2. 更新儀表標籤文字與顏色
+        const current = phaseCheckpoints[currentIdx];
+        const indicatorText = document.getElementById('phaseIndicatorText');
+        const tempText = document.getElementById('phaseTempText');
+        
+        if (indicatorText && tempText) {
+          indicatorText.innerText = current.name;
+          indicatorText.style.color = current.color;
+          tempText.innerText = current.temp;
+        }
+
+        // 3. SVG 節點微光脈衝連動
+        for (let i = 0; i < 4; i++) {
+          const ring = document.getElementById(`pulseRing-${i}`);
+          const dot = document.getElementById(`innerDot-${i}`);
+          if (ring && dot) {
+            if (i === currentIdx) {
+              gsap.to(dot, { r: 7, duration: 0.3 });
+              gsap.fromTo(ring, 
+                { r: 14, opacity: 0.8 }, 
+                { r: 24, opacity: 0, duration: 1.2, repeat: -1, ease: "power1.out" }
+              );
+            } else {
+              gsap.killTweensOf(ring);
+              gsap.to(ring, { r: 14, opacity: 0, duration: 0.2 });
+              gsap.to(dot, { r: 5, duration: 0.2 });
+            }
+          }
+        }
+      }
+    }
+
+    // 雙向交互：點擊節點或 HUD 按鈕跳轉至對應滾動位置
+    function jumpToPhase(phaseIndex) {
+      if (!mainScrollTriggerInstance) return;
+
+      const checkpoint = phaseCheckpoints[phaseIndex];
+      const triggerStart = mainScrollTriggerInstance.start;
+      const triggerEnd = mainScrollTriggerInstance.end;
+
+      // 映射全域真實滾動位置 TargetScrollY = Start + (End - Start) * Pi
+      const targetY = triggerStart + (triggerEnd - triggerStart) * checkpoint.progress;
+
+      gsap.to(window, {
+        scrollTo: { y: targetY, autoKill: false },
+        duration: 1.2,
+        ease: "power2.inOut"
+      });
+    }
+  </script>
+</body>
+</html>
